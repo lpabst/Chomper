@@ -21,73 +21,20 @@
         <canvas id='gameCanvas'></canvas>
     </main>
 
-    <!-- Objects script -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
     <script>
+        // set the w/h of the canvas
+        document.getElementById('gameCanvas').width = 1000;
+        document.getElementById('gameCanvas').height = 600;
+
+        // types
         const WALL = 'WALL';
         const PLAYER = 'PLAYER';
         const FOOD = 'FOOD';
-        function Wall(x, y, w, h) {
-            this.x = x;
-            this.y = y;
-            this.w = w;
-            this.h = h;
-            this.type = WALL;
-            return this;
-        }
-        function Player() {
-            this.x = 0;
-            this.y = 0;
-            this.xVel = 0;
-            this.yVel = 0;
-            this.type = PLAYER
+        const SCORE = 'SCORE';
 
-            this.move = function () {
-                this.x += this.xVel;
-                this.y += this.yVel;
-            }
-        }
-        function food(x, y, value) {
-            this.x = x;
-            this.y = y;
-            this.value = value;
-            this.type = FOOD;
-        }
-    </script>
-
-    <!-- Render Script -->
-    <script>
-        var Render = {
-            init: function (data) {
-                Render.helpers.drawEntity(data.entities.background, data.canvas.bgCtx);
-            },
-
-            update: function (data) {
-                data.canvas.context.clearRect(0, 0, data.canvas.canvas.width, data.canvas.canvas.height);
-
-                Render.helpers.drawText(data.entities.score, data.canvas.context);
-                Render.helpers.drawEntity(data.entities.player, data.canvas.context);
-
-                // data.entities.coinsArray.forEach(function (coin) {
-                //     Render.helpers.drawEntity(coin, data.canvas.fgCtx);
-                // });
-            },
-
-            helpers: {
-                drawEntity: function (entity, ctx) {
-                    ctx.drawImage(entity.sprite.img, entity.sprite.srcX, entity.sprite.srcY, entity.sprite.srcW, entity.sprite.srcH, entity.x, entity.y, entity.w, entity.h);
-                },
-
-                drawText: function (text, ctx) {
-                    ctx.font = text.size + ' ' + text.font;
-                    ctx.fillStyle = text.color;
-                    ctx.fillText("Coins: " + text.value, text.x, text.y);
-                }
-            }
-        }
-    </script>
-
-    <!-- Input script -->
-    <script>
+        // Player input
         var Input = {
             init: function (data) {
                 var self = this;
@@ -120,12 +67,12 @@
                 }
 
                 if (upArrowDown) {
-                    player.y += player.velY;
+                    player.y -= player.velY;
                     player.direction = 'up';
                 }
 
                 if (downArrowDown) {
-                    player.y -= player.velY;
+                    player.y += player.velY;
                     player.direction = 'down';
                 }
             },
@@ -150,20 +97,103 @@
             },
         }
 
-        // I think this is for animations, so we probs don't need it          
-        // var Movement = {
-        //     update: function (data) {
-        //         Movement.player(data);
-        //     },
+        // Entities Script
+        var Entities = {
+            init: function (data) {
+                var background = {
+                    x: 0,
+                    y: 0,
+                    w: 1000,
+                    h: 800,
+                };
 
-        //     player: function (data) {
-        //         data.entities.player.currentState.movement(data);
-        //     }
-        // }
-    </script>
+                var player = new Entities.helpers.player(100, 20, 20, 20);
+                var score = new Entities.helpers.Score(290, 70);
 
-    <!-- Physics script -->
-    <script>
+                var wallLocations = [[0, 0, 1000, 5], [0, 0, 5, 1000], [0, 1000, 1000, 5], [1000, 0, 5, 1000], [80, 420, 920, 5]];
+
+                data.entities = {
+                    background: background,
+                    player: player,
+                    score: score,
+                    wallsArray: [],
+                };
+
+                wallLocations.forEach(function (wall) {
+                    data.entities.wallsArray.push(new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3]))
+                })
+            },
+
+            helpers: {
+                player: function (x, y, w, h) {
+                    var self = this;
+                    this.type = PLAYER;
+                    this.x = x;
+                    this.y = y;
+                    this.w = w;
+                    this.h = h;
+
+                    this.direction = 'right';
+                    this.velY = 4;
+                    this.velX = 4;
+
+                    // this.move = function () {
+                    //     this.x += this.velX;
+                    //     this.x += this.velY;
+                    // }
+                },
+
+                Wall: function (x, y, w, h) {
+                    this.type = WALL;
+                    this.x = x;
+                    this.y = y;
+                    this.w = w;
+                    this.h = h;
+                },
+
+                Score: function (x, y) {
+                    this.x = x;
+                    this.y = y;
+                    this.value = 0;
+                    this.size = "25px";
+                    this.font = 'Arial';
+                    this.color = 'white';
+                    this.type = SCORE;
+                },
+            }
+        }
+
+        // Render Script
+        var Render = {
+            init: function (data) {
+                Render.helpers.drawEntity(data.entities.background, data.canvas.context);
+            },
+
+            update: function (data) {
+                data.canvas.context.clearRect(0, 0, data.canvas.canvas.width, data.canvas.canvas.height);
+
+                Render.helpers.drawText(data.entities.score, data.canvas.context);
+                Render.helpers.drawEntity(data.entities.player, data.canvas.context);
+
+                data.entities.wallsArray.forEach(function (wall) {
+                    Render.helpers.drawEntity(wall, data.canvas.context);
+                });
+            },
+
+            helpers: {
+                drawEntity: function (entity, ctx) {
+                    ctx.fillRect(entity.x, entity.y, entity.w, entity.h);
+                },
+
+                drawText: function (text, ctx) {
+                    ctx.font = text.size + ' ' + text.font;
+                    ctx.fillStyle = text.color;
+                    ctx.fillText("Coins: " + text.value, text.x, text.y);
+                }
+            }
+        }
+
+        // Physics Script
         var Physics = {
             update: function (data) {
                 // Physics.helpers.gravity(data.entities.player);
@@ -185,10 +215,6 @@
 
                 data.entities.wallsArray.forEach(function (wall) {
                     entityCollisionCheck(wall);
-                })
-
-                data.entities.coinsArray.forEach(function (coin) {
-                    entityCollisionCheck(coin);
                 })
 
                 entityCollisionCheck(data.entities.exitPipe);
@@ -213,217 +239,11 @@
                     if (player.y < entity.y && (player.x + player.w) > entity.x + 10 && player.x < (entity.x + entity.w) - 10 && player.velY >= 0) {
                         player.velY = 0;
                     }
-
-                } else if (entity.type === 'exitPipe') {
-                    // exit pipe code
-                } else if (entity.type === 'coin') {
-                    var coinsArray = data.entities.coinsArray;
-                    var index = coinsArray.indexOf(entity);
-
-                    var newCoin = coinsArray.splice(index, 1)[0];
-                    data.entities.score.value++;
-                    player.coins++;
-
-                    // Add a new coin to the screen to replace the old one
-                    console.log(newCoin);
-                    newCoin.x = Math.floor(Math.random() * 1000);
-                    newCoin.y = Math.floor(Math.random() * 200) + 200;
-                    coinsArray.push(newCoin);
                 }
-            },
-
-            helpers: {
-                // gravity: function (entity) {
-                //     entity.y += entity.velY;
-                //     entity.velY += 1.2;
-                // }
             }
         }
-    </script>
 
-    <!-- Entities script -->
-    <script>
-        var Entities = {
-            init: function (data) {
-                var background = {
-                    sprite: new Entities.helpers.Sprite(data.backgroundSprite, 0, 0, 1520, 1130),
-                    x: 0,
-                    y: 0,
-                    w: 1000,
-                    h: 800,
-                };
-
-                var jack = new Entities.helpers.Jack(data.spriteSheet, 100, 20, 80, 65);
-                var exitPipe = new Entities.helpers.ExitPipe(50, 100, 30, 80);
-                var score = new Entities.helpers.Score(290, 70);
-
-                var coinLocations = [[250, 350], [250, 250], [350, 250], [350, 350], [450, 250], [450, 350], [550, 250], [550, 350], [650, 250], [650, 350]];
-                var wallLocations = [[0, 0, 1000, 0], [0, 0, 0, 1000], [0, 1000, 1000, 0], [1000, 0, 0, 1000], [80, 420, 920, 0]];
-
-                data.entities = {};
-                data.entities.background = background;
-                data.entities.jack = jack;
-                data.entities.exitPipe = exitPipe;
-                data.entities.score = score;
-                data.entities.coinsArray = [];
-                data.entities.wallsArray = [];
-
-                coinLocations.forEach(function (coinLocation) {
-                    data.entities.coinsArray.push(new Entities.helpers.Coin(data.coinSprite, coinLocation[0], coinLocation[1], 45, 35));
-                })
-                wallLocations.forEach(function (wall) {
-                    data.entities.wallsArray.push(new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3]))
-                })
-            },
-
-            helpers: {
-                Sprite: function (img, srcX, srcY, srcW, srcH) {
-                    this.img = img;
-                    this.srcX = srcX;
-                    this.srcY = srcY;
-                    this.srcW = srcW;
-                    this.srcH = srcH;
-                },
-
-                Coin: function (img, x, y, w, h) {
-                    var self = this;
-                    this.type = 'coin';
-                    // this.sound = new Audio('./../audio/coinSound.mp3');
-                    this.sprite = new Entities.helpers.Sprite(img, 0, 0, 224, 224);
-                    this.x = x;
-                    this.y = y;
-                    this.w = w;
-                    this.h = h;
-                },
-
-                Jack: function (img, x, y, w, h) {
-                    var self = this;
-                    this.type = 'player';
-                    this.sprite = new Entities.helpers.Sprite(img, 0, 0, 80, 60);
-                    this.spriteAnimations = {
-                        walkRight: {
-                            frames: [
-                                new Entities.helpers.Sprite(img, 0, 0, 80, 65),
-                                new Entities.helpers.Sprite(img, 75, 60, 80, 65),
-                                new Entities.helpers.Sprite(img, 0, 0, 80, 65)
-                            ],
-                            currentFrame: 0,
-                        },
-                        walkLeft: {
-                            frames: [
-                                new Entities.helpers.Sprite(img, 0, 0, 80, 65),
-                                new Entities.helpers.Sprite(img, 75, 60, 80, 65),
-                                new Entities.helpers.Sprite(img, 0, 0, 80, 65)
-                            ],
-                            currentFrame: 0,
-                        },
-                        standRight: new Entities.helpers.Sprite(img, 0, 0, 80, 65),
-                        standLeft: new Entities.helpers.Sprite(img, 0, 0, 80, 65),
-                        jumpLeft: new Entities.helpers.Sprite(img, 150, 0, 80, 65),
-                        jumpRight: new Entities.helpers.Sprite(img, 150, 0, 80, 65),
-                    };
-                    this.states = {
-                        jumping: {
-                            movement: function (data) {
-                                if (self.velY === 0) {
-                                    // var jumpSound = self.jumpSound.cloneNode();
-                                    // jumpSound.play();
-                                    self.velY -= 23;
-                                }
-                            },
-                            animation: function (data) {
-                                if (self.direction === 'right') {
-                                    self.sprite = self.spriteAnimations.jumpRight;
-                                } else {
-                                    self.sprite = self.spriteAnimations.jumpLeft;
-                                }
-                            }
-                        },
-                        standing: {
-                            movement: function (data) {
-                                return;
-                            },
-                            animation: function (data) {
-                                if (self.direction === 'right') {
-                                    self.sprite = self.spriteAnimations.standRight;
-                                } else {
-                                    self.sprite = self.spriteAnimations.standLeft;
-                                }
-                            }
-                        },
-                        walking: {
-                            movement: function (data) {
-                                if (self.direction === 'right') {
-                                    self.x += self.velX;
-                                } else {
-                                    self.x -= self.velX;
-                                }
-                            },
-                            animation: function (data) {
-                                if (self.direction === 'right') {
-                                    if (data.animationFrame % 5 === 0) {
-                                        self.sprite = self.spriteAnimations.walkRight.frames[self.spriteAnimations.walkRight.currentFrame];
-                                        self.spriteAnimations.walkRight.currentFrame++;
-
-                                        if (self.spriteAnimations.walkRight.currentFrame > 2) {
-                                            self.spriteAnimations.walkRight.currentFrame = 0;
-                                        }
-                                    }
-                                } else {
-                                    if (data.animationFrame % 5 === 0) {
-                                        self.sprite = self.spriteAnimations.walkLeft.frames[self.spriteAnimations.walkLeft.currentFrame];
-                                        self.spriteAnimations.walkLeft.currentFrame++;
-
-                                        if (self.spriteAnimations.walkLeft.currentFrame > 2) {
-                                            self.spriteAnimations.walkLeft.currentFrame = 0;
-                                        }
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    this.currentState = self.states.standing;
-                    this.x = x;
-                    this.y = y;
-                    this.w = w;
-                    this.h = h;
-
-                    this.direction = 'right';
-                    this.velY = 0;
-                    this.velX = 4.5;
-                    this.coins = 0;
-                },
-
-                Wall: function (x, y, w, h) {
-                    this.type = 'wall';
-                    this.x = x;
-                    this.y = y;
-                    this.w = w;
-                    this.h = h;
-                },
-
-                ExitPipe: function (x, y, w, h) {
-                    this.type = 'exitPipe';
-                    this.x = x;
-                    this.y = y;
-                    this.w = w;
-                    this.h = h;
-                },
-
-                Score: function (x, y) {
-                    this.x = x;
-                    this.y = y;
-                    this.value = 0;
-                    this.size = "25px";
-                    this.font = 'Arial';
-                    this.color = 'white';
-                },
-            }
-        }
-    </script>
-
-    <!-- Game script -->
-    <script>
+        // Game Script
         var Game = {
             init: function () {
                 var cv = document.getElementById('gameCanvas');
@@ -438,6 +258,10 @@
                     animationFrame: 0,
                     canvas: canvas
                 }
+
+                Entities.init(data);
+                Input.init(data);
+                Render.init(data);
 
                 Game.run(data);
             },
@@ -461,9 +285,7 @@
             },
 
             update: function (data) {
-                Animation.update(data);
-                Movement.update(data);
-                Physics.update(data);
+                // nothing for now
             },
 
             render: function (data) {
