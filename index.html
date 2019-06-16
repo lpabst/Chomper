@@ -33,9 +33,10 @@
         var PLAYER = 'PLAYER';
         var FOOD = 'FOOD';
         var SCORE = 'SCORE';
+        var LIVES = 'LIVES';
 
         function random(low, high, includeHigh) {
-            let inclusiveIncrementer = includeHigh ? 1 : 0
+            var inclusiveIncrementer = includeHigh ? 1 : 0
             return Math.floor(Math.random() * (high - low + inclusiveIncrementer)) + low;
         }
 
@@ -120,31 +121,51 @@
                 };
 
                 var player = new Entities.helpers.player(300, 300, 20, 20);
-                var score = new Entities.helpers.Score(290, 70);
 
-                var wallLocations = [[0, 0, 1000, 8], [0, 0, 8, 1000], [0, 1000, 1000, 8], [1000, 0, 8, 1000], [80, 420, 420, 8],
-                [20, 20, 600, 8], [620, 20, 8, 80], [120, 100, 480, 8], [120, 45, 8, 55], [200, 20, 8, 55], [300, 45, 8, 55], [400, 20, 8, 55]];
+                // HUD area 0 - 140 && 0 - 88
+                var hudWalls = [[0, 80, 140, 8, true], [140, 0, 8, 88, true]];
+                var edgeWalls = [[0, 0, 1000, 8, true], [0, 0, 8, 1000, true], [0, 1000, 1000, 8, true], [1000, 0, 8, 1000, true]]
+                var obstacles = [[80, 420, 420, 8], [170, 20, 600, 8], [620, 20, 8, 80], [120, 110, 480, 8], [170, 45, 8, 55], [200, 20, 8, 55], [300, 45, 8, 55], [400, 20, 8, 55]];
+                var wallLocations = hudWalls.concat(edgeWalls).concat(obstacles);
+
                 var foodLocations = [
-                    [10, 20, 1],
-                    [50, 50, 2],
-                    [200, 80, 1]
+                    [150, 40, 1],
+                    [50, 90, 2],
+                    [200, 80, 1],
+                    [600, 600, 3],
+                    [400, 400, 4],
+                    [500, 500, 5]
                 ]
 
                 data.entities = {
                     background: background,
                     player: player,
-                    score: score,
                     wallsArray: [],
                     foodArray: [],
                 };
 
+                // see if anything is in the HUD area
+                function hudCheck(entity, ignoreHudAreaWarning) {
+                    for (var i = 0; i < hudWalls.length; i++) {
+                        if (!ignoreHudAreaWarning && entity.x < hudWalls[i][0] + hudWalls[i][2] && entity.y < hudWalls[i][1] + hudWalls[i][3]) {
+                            console.warn('In the HUD area');
+                            console.log(entity);
+                        }
+                    }
+                }
+
                 wallLocations.forEach(function (wall) {
-                    data.entities.wallsArray.push(new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3]))
+                    var wallObj = new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3]);
+                    var ignoreHudAreaWarning = wall[4];
+                    hudCheck(wallObj, ignoreHudAreaWarning);
+                    data.entities.wallsArray.push(wallObj)
                 })
 
                 // put pieces of food on the board
                 foodLocations.forEach(function (food) {
-                    data.entities.foodArray.push(new Entities.helpers.Food(food[0], food[1], food[2]))
+                    var foodObj = new Entities.helpers.Food(food[0], food[1], food[2])
+                    hudCheck(foodObj, false);
+                    data.entities.foodArray.push(foodObj)
                 })
             },
 
@@ -167,6 +188,7 @@
                     this.velX = 3;
                     this.resetVelX = 3;
                     this.resetVelY = 3;
+                    this.lives = 1;
 
                     this.update = function () {
                         this.velX = this.resetVelX;
@@ -184,7 +206,7 @@
 
                 Food: function (x, y, val) {
                     this.getColor = function () {
-                        let colorMap = {
+                        var colorMap = {
                             1: 'blue',
                             2: 'green',
                             3: 'red',
@@ -205,15 +227,25 @@
                     this.type = FOOD;
                 },
 
-                Score: function (x, y) {
-                    this.x = x;
-                    this.y = y;
-                    this.value = 0;
+                Score: function (value) {
+                    this.x = 10;
+                    this.y = 30;
+                    this.value = value;
                     this.size = "25px";
                     this.font = 'Arial';
                     this.color = 'green';
                     this.type = SCORE;
                 },
+
+                Lives: function (value) {
+                    this.x = 10;
+                    this.y = 60;
+                    this.value = value;
+                    this.size = "25px";
+                    this.font = 'Arial';
+                    this.color = 'green';
+                    this.type = LIVES;
+                }
             }
         }
 
@@ -226,7 +258,11 @@
             update: function (data) {
                 data.canvas.context.clearRect(0, 0, data.canvas.canvas.width, data.canvas.canvas.height);
 
-                Render.helpers.drawText(data.entities.score, data.canvas.context, "Points: ");
+                var pointsText = new Entities.helpers.Score(data.entities.player.points)
+                var livesText = new Entities.helpers.Lives(data.entities.player.lives)
+
+                Render.helpers.drawText(pointsText, data.canvas.context, "Points: ");
+                Render.helpers.drawText(livesText, data.canvas.context, 'Lives: ')
                 Render.helpers.drawEntity(data.entities.player, data.canvas.context);
 
                 data.entities.wallsArray.forEach(function (wall) {
@@ -333,14 +369,14 @@
                 }
 
                 if (entity.type === FOOD) {
-                    // adjust the score
-                    data.entities.score.value += entity.value;
+                    // adjust the player's points
+                    data.entities.player.points += entity.value;
 
                     // remove the food from the array
-                    let indexToRemove = data.entities.foodArray.indexOf(entity);
+                    var indexToRemove = data.entities.foodArray.indexOf(entity);
                     data.entities.foodArray.splice(indexToRemove, 1)
 
-                    // check if the level is complete
+                    // check if the level is finished
                     if (data.entities.foodArray.length === 0) {
                         // go to the next level at some point
                     }
