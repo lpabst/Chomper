@@ -29,10 +29,15 @@
         document.getElementById('gameCanvas').height = 600;
 
         // types
-        const WALL = 'WALL';
-        const PLAYER = 'PLAYER';
-        const FOOD = 'FOOD';
-        const SCORE = 'SCORE';
+        var WALL = 'WALL';
+        var PLAYER = 'PLAYER';
+        var FOOD = 'FOOD';
+        var SCORE = 'SCORE';
+
+        function random(low, high, includeHigh) {
+            let inclusiveIncrementer = includeHigh ? 1 : 0
+            return Math.floor(Math.random() * (high - low + inclusiveIncrementer)) + low;
+        }
 
         // Player input
         var Input = {
@@ -56,24 +61,31 @@
                 var upArrowDown = Input.helpers.isDown(38);
                 var downArrowDown = Input.helpers.isDown(40);
 
+                player.direction = {
+                    left: false,
+                    up: false,
+                    right: false,
+                    down: false
+                }
+
                 if (leftArrowDown) {
                     player.x -= player.velX
-                    player.direction = 'left';
+                    player.direction.left = true;
                 }
 
                 if (rightArrowDown) {
                     player.x += player.velX;
-                    player.direction = 'right';
+                    player.direction.right = true;
                 }
 
                 if (upArrowDown) {
                     player.y -= player.velY;
-                    player.direction = 'up';
+                    player.direction.up = true;
                 }
 
                 if (downArrowDown) {
                     player.y += player.velY;
-                    player.direction = 'down';
+                    player.direction.down = true;
                 }
             },
 
@@ -107,40 +119,59 @@
                     h: 800,
                 };
 
-                var player = new Entities.helpers.player(100, 20, 20, 20);
+                var player = new Entities.helpers.player(300, 300, 20, 20);
                 var score = new Entities.helpers.Score(290, 70);
 
-                var wallLocations = [[0, 0, 1000, 5], [0, 0, 5, 1000], [0, 1000, 1000, 5], [1000, 0, 5, 1000], [80, 420, 920, 5]];
+                var wallLocations = [[0, 0, 1000, 8], [0, 0, 8, 1000], [0, 1000, 1000, 8], [1000, 0, 8, 1000], [80, 420, 420, 8],
+                [20, 20, 600, 8], [620, 20, 8, 80], [120, 100, 480, 8], [120, 45, 8, 55], [200, 20, 8, 55], [300, 45, 8, 55], [400, 20, 8, 55]];
+                var foodLocations = [
+                    [10, 20, 1],
+                    [50, 50, 2],
+                    [200, 80, 1]
+                ]
 
                 data.entities = {
                     background: background,
                     player: player,
                     score: score,
                     wallsArray: [],
+                    foodArray: [],
                 };
 
                 wallLocations.forEach(function (wall) {
                     data.entities.wallsArray.push(new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3]))
                 })
+
+                // put pieces of food on the board
+                foodLocations.forEach(function (food) {
+                    data.entities.foodArray.push(new Entities.helpers.Food(food[0], food[1], food[2]))
+                })
+            },
+
+            update: function (data) {
+                data.entities.player.update();
             },
 
             helpers: {
                 player: function (x, y, w, h) {
                     var self = this;
                     this.type = PLAYER;
+                    this.points = 0;
+
                     this.x = x;
                     this.y = y;
                     this.w = w;
                     this.h = h;
-
                     this.direction = 'right';
-                    this.velY = 4;
-                    this.velX = 4;
+                    this.velY = 3;
+                    this.velX = 3;
+                    this.resetVelX = 3;
+                    this.resetVelY = 3;
 
-                    // this.move = function () {
-                    //     this.x += this.velX;
-                    //     this.x += this.velY;
-                    // }
+                    this.update = function () {
+                        this.velX = this.resetVelX;
+                        this.velY = this.resetVelY;
+                    }
                 },
 
                 Wall: function (x, y, w, h) {
@@ -151,13 +182,36 @@
                     this.h = h;
                 },
 
+                Food: function (x, y, val) {
+                    this.getColor = function () {
+                        let colorMap = {
+                            1: 'blue',
+                            2: 'green',
+                            3: 'red',
+                            4: 'purple',
+                            5: 'aqua'
+                        }
+                        return colorMap[this.value]
+                    }
+
+                    this.x = x ? x : random(0, data.canvas.width)
+                    this.y = y ? y : random(0, data.canvas.height)
+                    this.w = 12;
+                    this.h = 12;
+                    this.size = '15px';
+                    this.font = 'Arial';
+                    this.value = val;
+                    this.color = this.getColor();
+                    this.type = FOOD;
+                },
+
                 Score: function (x, y) {
                     this.x = x;
                     this.y = y;
                     this.value = 0;
                     this.size = "25px";
                     this.font = 'Arial';
-                    this.color = 'white';
+                    this.color = 'green';
                     this.type = SCORE;
                 },
             }
@@ -172,23 +226,28 @@
             update: function (data) {
                 data.canvas.context.clearRect(0, 0, data.canvas.canvas.width, data.canvas.canvas.height);
 
-                Render.helpers.drawText(data.entities.score, data.canvas.context);
+                Render.helpers.drawText(data.entities.score, data.canvas.context, "Points: ");
                 Render.helpers.drawEntity(data.entities.player, data.canvas.context);
 
                 data.entities.wallsArray.forEach(function (wall) {
-                    Render.helpers.drawEntity(wall, data.canvas.context);
+                    Render.helpers.drawEntity(wall, data.canvas.context, 'white');
                 });
+                data.entities.foodArray.forEach(function (food) {
+                    Render.helpers.drawEntity(food, data.canvas.context, food.color);
+                })
             },
 
             helpers: {
-                drawEntity: function (entity, ctx) {
+                drawEntity: function (entity, ctx, color) {
+                    ctx.fillStyle = color ? color : 'white';
                     ctx.fillRect(entity.x, entity.y, entity.w, entity.h);
                 },
 
-                drawText: function (text, ctx) {
+                drawText: function (text, ctx, prefix) {
+                    prefix = prefix ? prefix : '';
                     ctx.font = text.size + ' ' + text.font;
                     ctx.fillStyle = text.color;
-                    ctx.fillText("Coins: " + text.value, text.x, text.y);
+                    ctx.fillText(prefix + text.value, text.x, text.y);
                 }
             }
         }
@@ -196,7 +255,6 @@
         // Physics Script
         var Physics = {
             update: function (data) {
-                // Physics.helpers.gravity(data.entities.player);
                 Physics.collisionDetection(data);
             },
 
@@ -216,28 +274,75 @@
                 data.entities.wallsArray.forEach(function (wall) {
                     entityCollisionCheck(wall);
                 })
-
-                entityCollisionCheck(data.entities.exitPipe);
+                data.entities.foodArray.forEach(function (food) {
+                    entityCollisionCheck(food);
+                })
             },
 
             handleCollision(data, entity) {
                 var player = data.entities.player;
+                var playerLeftSide = player.x;
+                var playerRightSide = player.x + player.w;
+                var playerTopSide = player.y;
+                var playerBottomSide = player.y + player.h;
 
-                if (entity.type === 'wall') {
+                if (entity.type === WALL) {
+                    var wallLeftSide = entity.x;
+                    var wallRightSide = entity.x + entity.w;
+                    var wallTopSide = entity.y;
+                    var wallBottomSide = entity.y + entity.h;
+                    // if the user is barely in the wall they can still move since we don't move them pixel by pixel and they might jump into it slightly
+                    var allowanceBuffer = player.resetVelX;
 
-                    // left side wall collision
-                    if (player.x < entity.x && player.y >= entity.y) {
-                        player.x = entity.x - player.w;
+                    // player is in between the walls borders and not trying to move the other way
+                    if (!player.direction.right &&
+                        playerLeftSide > wallLeftSide &&
+                        playerLeftSide < wallRightSide &&
+                        playerRightSide > wallRightSide &&
+                        playerTopSide < wallBottomSide - allowanceBuffer &&
+                        playerBottomSide > wallTopSide + allowanceBuffer) {
+                        player.velX = 0;
                     }
 
-                    // right side wall collision
-                    if (player.x > entity.x && player.y >= entity.y) {
-                        player.x = entity.x + entity.w;
+                    if (!player.direction.left &&
+                        playerRightSide > wallLeftSide &&
+                        playerRightSide < wallRightSide &&
+                        playerLeftSide < wallLeftSide &&
+                        playerTopSide < wallBottomSide - allowanceBuffer &&
+                        playerBottomSide > wallTopSide + allowanceBuffer) {
+                        player.velX = 0;
                     }
 
-                    // top of wall collision
-                    if (player.y < entity.y && (player.x + player.w) > entity.x + 10 && player.x < (entity.x + entity.w) - 10 && player.velY >= 0) {
+                    if (!player.direction.down &&
+                        playerTopSide > wallTopSide &&
+                        playerTopSide < wallBottomSide &&
+                        playerBottomSide > wallBottomSide &&
+                        playerLeftSide < wallRightSide - allowanceBuffer &&
+                        playerRightSide > wallLeftSide + allowanceBuffer) {
                         player.velY = 0;
+                    }
+
+                    if (!player.direction.up &&
+                        playerBottomSide > wallTopSide &&
+                        playerBottomSide < wallBottomSide &&
+                        playerTopSide < wallTopSide &&
+                        playerLeftSide < wallRightSide - allowanceBuffer &&
+                        playerRightSide > wallLeftSide + allowanceBuffer) {
+                        player.velY = 0;
+                    }
+                }
+
+                if (entity.type === FOOD) {
+                    // adjust the score
+                    data.entities.score.value += entity.value;
+
+                    // remove the food from the array
+                    let indexToRemove = data.entities.foodArray.indexOf(entity);
+                    data.entities.foodArray.splice(indexToRemove, 1)
+
+                    // check if the level is complete
+                    if (data.entities.foodArray.length === 0) {
+                        // go to the next level at some point
                     }
                 }
             }
@@ -285,7 +390,8 @@
             },
 
             update: function (data) {
-                // nothing for now
+                Entities.update(data);
+                Physics.update(data);
             },
 
             render: function (data) {
