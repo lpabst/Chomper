@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Chomper</title>
+</head>
+
+<body>
+    <style>
+        #gameCanvas {
+            width: 1000px;
+            height: 700px;
+            background: blue;
+        }
+    </style>
+
+    <canvas id='gameCanvas'></canvas>
+
+
+
+
+    <script>
+        function Wall(x, y, w, h) {
+            this.x = x;
+            this.y = y;
+            this.w = w;
+            this.h = h;
+            return this;
+        }
+        function Player() {
+            this.x = 0;
+            this.y = 0;
+            this.xVel = 0;
+            this.yVel = 0;
+
+            this.move = function () {
+                this.x += this.xVel;
+                this.y += this.yVel;
+            }
+        }
+    </script>
+</body>
+
+</html>
