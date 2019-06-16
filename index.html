@@ -12,22 +12,26 @@
     <style>
         #gameCanvas {
             width: 1000px;
-            height: 700px;
-            background: blue;
+            height: 600px;
+            background: black;
         }
     </style>
 
-    <canvas id='gameCanvas'></canvas>
+    <main>
 
-
-
+        <canvas id='gameCanvas'></canvas>
+    </main>
 
     <script>
+        const WALL = 'WALL';
+        const PLAYER = 'PLAYER';
+        const FOOD = 'FOOD';
         function Wall(x, y, w, h) {
             this.x = x;
             this.y = y;
             this.w = w;
             this.h = h;
+            this.type = WALL;
             return this;
         }
         function Player() {
@@ -35,11 +39,18 @@
             this.y = 0;
             this.xVel = 0;
             this.yVel = 0;
+            this.type = PLAYER
 
             this.move = function () {
                 this.x += this.xVel;
                 this.y += this.yVel;
             }
+        }
+        function food(x, y, value) {
+            this.x = x;
+            this.y = y;
+            this.value = value;
+            this.type = FOOD;
         }
     </script>
 </body>
