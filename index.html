@@ -18,11 +18,111 @@
     </style>
 
     <main>
-
         <canvas id='gameCanvas'></canvas>
     </main>
 
     <script>
+        // GAME SCRIPT
+        var Game = {
+            init: function () {
+                var canvas = document.getElementById('gameCanvas');
+                var ctx = canvas.getContext('2d')
+                // var bgCanvas = document.getElementById('bgCanvas');
+
+                // var canvas = {
+                //     bgCanvas: bgCanvas,
+                //     fgCanvas: fgCanvas,
+                //     bgCtx: bgCanvas.getContext('2d'),
+                //     fgCtx: fgCanvas.getContext('2d'),
+                // }
+
+                // var spriteSheet = new Image();
+                // var backgroundSprite = new Image();
+                // var coinSprite = new Image();
+
+                // spriteSheet.src = 'img/spriteSheet.png';
+                // backgroundSprite.src = 'img/background.png';
+                // coinSprite.src = 'img/coin.png';
+
+                // var spriteSheetLoaded = false;
+                // var backgroundSpriteLoaded = false;
+                // var coinSpriteLoaded = false;
+
+                // spriteSheet.addEventListener('load', function () {
+                //     spriteSheetLoaded = true;
+                //     imagesLoaded();
+                // });
+                // backgroundSprite.addEventListener('load', function () {
+                //     backgroundSpriteLoaded = true;
+                //     imagesLoaded();
+                // });
+                // backgroundSprite.addEventListener('load', function () {
+                //     coinSpriteLoaded = true;
+                //     imagesLoaded();
+                // });
+
+                var data = {
+                    animationFrame: 0,
+                    canvas: canvas
+                }
+
+                Game.run(data);
+
+                // function imagesLoaded() {
+                //     if (!spriteSheetLoaded || !backgroundSpriteLoaded || !coinSpriteLoaded) {
+                //         return;
+                //     }
+
+                //     var data = {
+                //         animationFrame: 0,
+                //         // spriteSheet: spriteSheet,
+                //         // backgroundSprite: backgroundSprite,
+                //         // coinSprite: coinSprite,
+                //         canvas: canvas
+                //     }
+
+                //     Input.init(data);
+                //     Entities.init(data);
+                //     Render.init(data);
+                //     Game.run(data);
+                // }
+            },
+
+            run: function (data) {
+                var loop = function () {
+                    Game.input(data);
+                    Game.update(data);
+                    Game.render(data);
+
+                    data.animationFrame++;
+
+                    window.requestAnimationFrame(loop);
+                }
+
+                loop();
+            },
+
+            input: function (data) {
+                Input.update(data);
+            },
+
+            update: function (data) {
+                Animation.update(data);
+                Movement.update(data);
+                Physics.update(data);
+            },
+
+            render: function (data) {
+                Render.update(data);
+            },
+        }
+
+        Game.init();
+
+
+
+
+
         const WALL = 'WALL';
         const PLAYER = 'PLAYER';
         const FOOD = 'FOOD';
