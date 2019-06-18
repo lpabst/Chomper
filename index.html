@@ -30,6 +30,7 @@
 
         // types
         var WALL = 'WALL';
+        var OBSTACLE = 'OBSTACLE';
         var PLAYER = 'PLAYER';
         var ENEMY = 'ENEMY';
         var FOOD = 'FOOD';
@@ -127,11 +128,12 @@
                 var hudWalls = [[0, 80, 140, 8, true], [140, 0, 8, 88, true]];
                 var edgeWalls = [[0, 0, 1000, 8, true], [0, 0, 8, 1000, true], [0, 1000, 1000, 8, true], [1000, 0, 8, 1000, true]]
                 var obstacles = [[80, 420, 420, 8], [170, 20, 600, 8], [620, 20, 8, 80], [120, 110, 480, 8], [170, 45, 8, 55], [200, 20, 8, 55], [300, 45, 8, 55], [400, 20, 8, 55]];
-                var wallLocations = hudWalls.concat(edgeWalls).concat(obstacles);
+                var wallLocations = hudWalls.concat(edgeWalls);
 
                 var enemyLocations = [
-                    [200, 200, 20, 3],
-                    [500, 320, 10, 5]
+                    [200, 200, 20, 3, 'normal'],
+                    [500, 320, 10, 5, 'lightweight'],
+                    [800, 150, 50, 1, 'tank']
                 ]
 
                 var foodLocations = [
@@ -161,8 +163,16 @@
                     }
                 }
 
+
                 wallLocations.forEach(function (wall) {
-                    var wallObj = new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3]);
+                    var wallObj = new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3], WALL);
+                    var ignoreHudAreaWarning = wall[4];
+                    hudCheck(wallObj, ignoreHudAreaWarning);
+                    data.entities.wallsArray.push(wallObj)
+                })
+
+                obstacles.forEach(function (wall) {
+                    var wallObj = new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3], OBSTACLE);
                     var ignoreHudAreaWarning = wall[4];
                     hudCheck(wallObj, ignoreHudAreaWarning);
                     data.entities.wallsArray.push(wallObj)
@@ -183,7 +193,7 @@
             },
 
             update: function (data) {
-                data.entities.player.update();
+                data.entities.player.update(data);
             },
 
             helpers: {
@@ -201,28 +211,32 @@
                     this.velY = 3;
                     this.velX = 3;
                     this.speed = 3;
-                    this.lives = 1;
+                    this.lives = 3;
                     this.strength = 5;
                     // while in ghost state, user can pass through walls and cannot lost lives
                     this.inGhostState = false;
                     this.enteredGhostStateTimestamp = null;
                     this.ghostStateDuration = 5000;
 
-                    this.update = function () {
-                        this.resetVelocities();
-                        this.handleGhostStateIfNecessary();
+                    this.update = function (data) {
+                        this.color = 'white';
+                        this.resetVelocities(data);
+                        this.handleGhostStateIfNecessary(data);
                     }
 
                     // reset velocities in case they were set to 0 during a collision
-                    this.resetVelocities = function () {
+                    this.resetVelocities = function (data) {
                         this.velX = this.speed;
                         this.velY = this.speed;
                         return;
                     }
 
-                    this.handleGhostStateIfNecessary = function () {
+                    this.handleGhostStateIfNecessary = function (data) {
                         if (this.inGhostState) {
+                            // blink gray
                             this.color = 'gray';
+                            if (data.animationFrame % 5 === 0) this.color = 'black';
+                            console.log(this.color);
 
                             // see if it's time to end ghost state
                             let now = new Date().getTime();
@@ -236,13 +250,14 @@
                     }
                 },
 
-                Wall: function (x, y, w, h) {
+                Wall: function (x, y, w, h, wallType = OBSTACLE) {
                     this.x = x;
                     this.y = y;
                     this.w = w;
                     this.h = h;
-                    this.type = WALL;
                     this.color = 'white';
+                    this.type = WALL;
+                    this.wallType = wallType;
                 },
 
                 Food: function (x, y, val) {
@@ -268,15 +283,27 @@
                     this.type = FOOD;
                 },
 
-                Enemy: function (x, y, strength, speed) {
+                Enemy: function (x, y, strength, speed, enemyType = 'normal') {
                     this.x = x;
                     this.y = y;
                     this.strength = strength;
                     this.speed = speed;
-                    this.w = 20;
-                    this.h = 20;
+                    this.enemyType = enemyType;
                     this.color = 'red';
                     this.type = ENEMY;
+
+                    var sizeMap = {
+                        normal: 20,
+                        tank: 30,
+                        lightweight: 15
+                    }
+                    // default size is 20
+                    this.size = 20;
+                    if (sizeMap[this.enemyType]) {
+                        this.size = sizeMap[this.enemyType]
+                    }
+                    this.w = this.size;
+                    this.h = this.size;
                 },
 
                 Score: function (value) {
@@ -321,7 +348,7 @@
                 for (var entityType in data.entities) {
                     if (Array.isArray(data.entities[entityType])) {
                         data.entities[entityType].forEach(function (entity) {
-                            Render.helpers.drawEntity(entity, data.canvas.context, entity.color);
+                            Render.helpers.drawEntity(entity, data.canvas.context);
                         })
                     }
                 }
@@ -329,7 +356,7 @@
 
             helpers: {
                 drawEntity: function (entity, ctx, color) {
-                    ctx.fillStyle = color ? color : 'white';
+                    ctx.fillStyle = color ? color : entity.color ? entity.color : 'white';
                     ctx.fillRect(entity.x, entity.y, entity.w, entity.h);
                 },
 
@@ -371,16 +398,18 @@
                 }
             },
 
+            // biggest freaking function in the game
             handleCollision(data, entity) {
+                // easy to read variables
                 var player = data.entities.player;
-
-                // when in ghost state, collisions can't happen
-                if (player.inGhostState) return;
-
                 var playerLeftSide = player.x;
                 var playerRightSide = player.x + player.w;
                 var playerTopSide = player.y;
                 var playerBottomSide = player.y + player.h;
+
+                // when in ghost state, collisions can't happen (except edge walls still work)
+                var isEdgeWall = entity.type === WALL && entity.wallType === WALL;
+                if (player.inGhostState && !isEdgeWall) return;
 
                 if (entity.type === WALL) {
                     var wallLeftSide = entity.x;
