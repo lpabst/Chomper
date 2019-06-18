@@ -31,6 +31,7 @@
         // types
         var WALL = 'WALL';
         var PLAYER = 'PLAYER';
+        var ENEMY = 'ENEMY';
         var FOOD = 'FOOD';
         var SCORE = 'SCORE';
         var LIVES = 'LIVES';
@@ -120,13 +121,18 @@
                     h: 800,
                 };
 
-                var player = new Entities.helpers.player(300, 300, 20, 20);
+                var player = new Entities.helpers.player(300, 300);
 
                 // HUD area 0 - 140 && 0 - 88
                 var hudWalls = [[0, 80, 140, 8, true], [140, 0, 8, 88, true]];
                 var edgeWalls = [[0, 0, 1000, 8, true], [0, 0, 8, 1000, true], [0, 1000, 1000, 8, true], [1000, 0, 8, 1000, true]]
                 var obstacles = [[80, 420, 420, 8], [170, 20, 600, 8], [620, 20, 8, 80], [120, 110, 480, 8], [170, 45, 8, 55], [200, 20, 8, 55], [300, 45, 8, 55], [400, 20, 8, 55]];
                 var wallLocations = hudWalls.concat(edgeWalls).concat(obstacles);
+
+                var enemyLocations = [
+                    [200, 200, 20, 3],
+                    [500, 320, 10, 5]
+                ]
 
                 var foodLocations = [
                     [150, 40, 1],
@@ -141,6 +147,7 @@
                     background: background,
                     player: player,
                     wallsArray: [],
+                    enemiesArray: [],
                     foodArray: [],
                 };
 
@@ -159,6 +166,12 @@
                     var ignoreHudAreaWarning = wall[4];
                     hudCheck(wallObj, ignoreHudAreaWarning);
                     data.entities.wallsArray.push(wallObj)
+                })
+
+                enemyLocations.forEach(function (enemy) {
+                    var enemyObj = new Entities.helpers.Enemy(enemy[0], enemy[1], enemy[2], enemy[3]);
+                    hudCheck(enemyObj);
+                    data.entities.enemiesArray.push(enemyObj)
                 })
 
                 // put pieces of food on the board
@@ -181,27 +194,55 @@
 
                     this.x = x;
                     this.y = y;
-                    this.w = w;
-                    this.h = h;
+                    this.w = 20;
+                    this.h = 20;
+                    this.color = 'white';
                     this.direction = 'right';
                     this.velY = 3;
                     this.velX = 3;
-                    this.resetVelX = 3;
-                    this.resetVelY = 3;
+                    this.speed = 3;
                     this.lives = 1;
+                    this.strength = 5;
+                    // while in ghost state, user can pass through walls and cannot lost lives
+                    this.inGhostState = false;
+                    this.enteredGhostStateTimestamp = null;
+                    this.ghostStateDuration = 5000;
 
                     this.update = function () {
-                        this.velX = this.resetVelX;
-                        this.velY = this.resetVelY;
+                        this.resetVelocities();
+                        this.handleGhostStateIfNecessary();
+                    }
+
+                    // reset velocities in case they were set to 0 during a collision
+                    this.resetVelocities = function () {
+                        this.velX = this.speed;
+                        this.velY = this.speed;
+                        return;
+                    }
+
+                    this.handleGhostStateIfNecessary = function () {
+                        if (this.inGhostState) {
+                            this.color = 'gray';
+
+                            // see if it's time to end ghost state
+                            let now = new Date().getTime();
+                            let ghostStateTimeElapsed = now - this.enteredGhostStateTimestamp;
+                            if (ghostStateTimeElapsed > this.ghostStateDuration) {
+                                this.inGhostState = false;
+                                this.enteredGhostStateTimestamp = null;
+                            }
+                        }
+                        return;
                     }
                 },
 
                 Wall: function (x, y, w, h) {
-                    this.type = WALL;
                     this.x = x;
                     this.y = y;
                     this.w = w;
                     this.h = h;
+                    this.type = WALL;
+                    this.color = 'white';
                 },
 
                 Food: function (x, y, val) {
@@ -209,7 +250,7 @@
                         var colorMap = {
                             1: 'blue',
                             2: 'green',
-                            3: 'red',
+                            3: 'orange',
                             4: 'purple',
                             5: 'aqua'
                         }
@@ -225,6 +266,17 @@
                     this.value = val;
                     this.color = this.getColor();
                     this.type = FOOD;
+                },
+
+                Enemy: function (x, y, strength, speed) {
+                    this.x = x;
+                    this.y = y;
+                    this.strength = strength;
+                    this.speed = speed;
+                    this.w = 20;
+                    this.h = 20;
+                    this.color = 'red';
+                    this.type = ENEMY;
                 },
 
                 Score: function (value) {
@@ -265,12 +317,14 @@
                 Render.helpers.drawText(livesText, data.canvas.context, 'Lives: ')
                 Render.helpers.drawEntity(data.entities.player, data.canvas.context);
 
-                data.entities.wallsArray.forEach(function (wall) {
-                    Render.helpers.drawEntity(wall, data.canvas.context, 'white');
-                });
-                data.entities.foodArray.forEach(function (food) {
-                    Render.helpers.drawEntity(food, data.canvas.context, food.color);
-                })
+                // draw all of the entities listed in arrays in the data object
+                for (var entityType in data.entities) {
+                    if (Array.isArray(data.entities[entityType])) {
+                        data.entities[entityType].forEach(function (entity) {
+                            Render.helpers.drawEntity(entity, data.canvas.context, entity.color);
+                        })
+                    }
+                }
             },
 
             helpers: {
@@ -307,16 +361,22 @@
                     }
                 }
 
-                data.entities.wallsArray.forEach(function (wall) {
-                    entityCollisionCheck(wall);
-                })
-                data.entities.foodArray.forEach(function (food) {
-                    entityCollisionCheck(food);
-                })
+                // check for collision with any of the entities listed in arrays in the data object
+                for (var entityType in data.entities) {
+                    if (Array.isArray(data.entities[entityType])) {
+                        data.entities[entityType].forEach(function (entity) {
+                            entityCollisionCheck(entity);
+                        })
+                    }
+                }
             },
 
             handleCollision(data, entity) {
                 var player = data.entities.player;
+
+                // when in ghost state, collisions can't happen
+                if (player.inGhostState) return;
+
                 var playerLeftSide = player.x;
                 var playerRightSide = player.x + player.w;
                 var playerTopSide = player.y;
@@ -328,7 +388,7 @@
                     var wallTopSide = entity.y;
                     var wallBottomSide = entity.y + entity.h;
                     // if the user is barely in the wall they can still move since we don't move them pixel by pixel and they might jump into it slightly
-                    var allowanceBuffer = player.resetVelX;
+                    var allowanceBuffer = player.speed;
 
                     // player is in between the walls borders and not trying to move the other way
                     if (!player.direction.right &&
@@ -381,6 +441,22 @@
                         // go to the next level at some point
                     }
                 }
+
+                if (entity.type === ENEMY) {
+                    // player loses a life and enters ghost state for a short time
+                    if (player.strength < entity.strength) {
+                        player.lives--;
+
+                        // check if game is over
+                        if (player.lives < 1) {
+                            data.gameOver = true;
+                            data.gameRunning = false;
+                        }
+
+                        player.inGhostState = true;
+                        player.enteredGhostStateTimestamp = new Date().getTime();
+                    }
+                }
             }
         }
 
@@ -397,7 +473,9 @@
 
                 var data = {
                     animationFrame: 0,
-                    canvas: canvas
+                    canvas: canvas,
+                    gameOver: false,
+                    gameRunning: true
                 }
 
                 Entities.init(data);
@@ -409,6 +487,12 @@
 
             run: function (data) {
                 var loop = function () {
+                    // end the loop if game is over or not running
+                    if (data.gameOver || !data.gameRunning) {
+                        Game.showGameOver(data);
+                        return;
+                    }
+
                     Game.input(data);
                     Game.update(data);
                     Game.render(data);
@@ -433,6 +517,17 @@
             render: function (data) {
                 Render.update(data);
             },
+
+            showGameOver(data) {
+                Render.helpers.drawText({
+                    color: 'white',
+                    x: 200,
+                    y: 300,
+                    size: '40px',
+                    font: 'Arial',
+                    value: 'Game Over. Final Score: ' + data.entities.player.points
+                }, data.canvas.context)
+            }
         }
 
         Game.init();
