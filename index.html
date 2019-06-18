@@ -36,6 +36,12 @@
         var FOOD = 'FOOD';
         var SCORE = 'SCORE';
         var LIVES = 'LIVES';
+        var enemyType = {
+            NORMAL: 'NORMAL', // default
+            TANK: 'TANK', // slow and increased strength
+            SPEEDY: 'SPEEDY', // fast and decreased strength
+            FLOATER: 'FLOATER' // slow and can go through walls
+        }
 
         function random(low, high, includeHigh) {
             var inclusiveIncrementer = includeHigh ? 1 : 0
@@ -131,9 +137,10 @@
                 var wallLocations = hudWalls.concat(edgeWalls);
 
                 var enemyLocations = [
-                    [200, 200, 20, 3, 'normal'],
-                    [500, 320, 10, 5, 'lightweight'],
-                    [800, 150, 50, 1, 'tank']
+                    [200, 200, 20, 2, enemyType.NORMAL],
+                    [500, 320, 10, 3.05, enemyType.SPEEDY],
+                    [800, 150, 50, 1, enemyType.TANK],
+                    [50, 700, 20, 1, enemyType.FLOATER],
                 ]
 
                 var foodLocations = [
@@ -179,7 +186,7 @@
                 })
 
                 enemyLocations.forEach(function (enemy) {
-                    var enemyObj = new Entities.helpers.Enemy(enemy[0], enemy[1], enemy[2], enemy[3]);
+                    var enemyObj = new Entities.helpers.Enemy(enemy[0], enemy[1], enemy[2], enemy[3], enemy[4]);
                     hudCheck(enemyObj);
                     data.entities.enemiesArray.push(enemyObj)
                 })
@@ -194,6 +201,9 @@
 
             update: function (data) {
                 data.entities.player.update(data);
+                data.entities.enemiesArray.forEach(function (enemy) {
+                    enemy.update(data);
+                })
             },
 
             helpers: {
@@ -211,7 +221,7 @@
                     this.velY = 3;
                     this.velX = 3;
                     this.speed = 3;
-                    this.lives = 3;
+                    this.lives = 50;
                     this.strength = 5;
                     // while in ghost state, user can pass through walls and cannot lost lives
                     this.inGhostState = false;
@@ -235,8 +245,7 @@
                         if (this.inGhostState) {
                             // blink gray
                             this.color = 'gray';
-                            if (data.animationFrame % 5 === 0) this.color = 'black';
-                            console.log(this.color);
+                            if (data.animationFrame % 8 === 0) this.color = 'black';
 
                             // see if it's time to end ghost state
                             let now = new Date().getTime();
@@ -291,11 +300,20 @@
                     this.enemyType = enemyType;
                     this.color = 'red';
                     this.type = ENEMY;
+                    this.frozen = false;
+                    this.frozenTimestamp = null;
+                    this.againstWall = {
+                        left: false,
+                        right: false,
+                        top: false,
+                        bottom: false
+                    }
 
+                    // faster ones are bigger so you can lose them in small spaces
                     var sizeMap = {
                         normal: 20,
-                        tank: 30,
-                        lightweight: 15
+                        tank: 15,
+                        lightweight: 30
                     }
                     // default size is 20
                     this.size = 20;
@@ -304,6 +322,35 @@
                     }
                     this.w = this.size;
                     this.h = this.size;
+
+                    this.update = function (data) {
+
+                        var player = data.entities.player;
+                        // if it's frozen, see if it's time to unfreeze
+                        // for now the freeze time will be equal to the speed
+                        if (this.frozen) {
+                            let now = new Date().getTime();
+                            if (now - this.frozenTimestamp > this.speed * 1000) {
+                                this.frozen = false;
+                                this.frozenTimestamp = null;
+                            }
+                        }
+                        // otherwise see which direction to go
+                        else {
+                            if (player.x < this.x && !this.againstWall.left) this.x -= this.speed;
+                            if (player.x > this.x && !this.againstWall.right) this.x += this.speed;
+                            if (player.y < this.y && !this.againstWall.top) this.y -= this.speed;
+                            if (player.y > this.y && !this.againstWall.bottom) this.y += this.speed;
+                        }
+
+                        // after updating the location reset the wall info
+                        this.againstWall = {
+                            left: false,
+                            right: false,
+                            top: false,
+                            bottom: false
+                        }
+                    }
                 },
 
                 Score: function (value) {
@@ -341,8 +388,7 @@
                 var livesText = new Entities.helpers.Lives(data.entities.player.lives)
 
                 Render.helpers.drawText(pointsText, data.canvas.context, "Points: ");
-                Render.helpers.drawText(livesText, data.canvas.context, 'Lives: ')
-                Render.helpers.drawEntity(data.entities.player, data.canvas.context);
+                Render.helpers.drawText(livesText, data.canvas.context, 'Lives: ');
 
                 // draw all of the entities listed in arrays in the data object
                 for (var entityType in data.entities) {
@@ -352,6 +398,10 @@
                         })
                     }
                 }
+
+                // draw the player last so they show up on top of everything else
+                Render.helpers.drawEntity(data.entities.player, data.canvas.context);
+
             },
 
             helpers: {
@@ -378,13 +428,23 @@
             collisionDetection: function (data) {
                 var player = data.entities.player;
 
-                var entityCollisionCheck = function (entity) {
+                function entityPlayerCollisionCheck(entity) {
                     if (player.x < entity.x + entity.w &&
                         player.x + player.w > entity.x &&
                         player.y < entity.y + entity.h &&
                         player.y + player.h > entity.y) {
                         // Collision occurred
-                        Physics.handleCollision(data, entity);
+                        Physics.handlePlayerCollision(data, entity);
+                    }
+                }
+
+                function enemyWallCollisionCheck(enemy, wall) {
+                    if (enemy.x < wall.x + wall.w &&
+                        enemy.x + enemy.w > wall.x &&
+                        enemy.y < wall.y + wall.h &&
+                        enemy.y + enemy.h > wall.y) {
+                        // Collision occurred
+                        Physics.handleEnemyWallCollision(data, enemy, wall);
                     }
                 }
 
@@ -392,14 +452,51 @@
                 for (var entityType in data.entities) {
                     if (Array.isArray(data.entities[entityType])) {
                         data.entities[entityType].forEach(function (entity) {
-                            entityCollisionCheck(entity);
+                            entityPlayerCollisionCheck(entity);
+                            // if it's an enemy, check if it's hitting any walls
+                            if (entity.type === ENEMY) {
+                                data.entities.wallsArray.forEach(function (wall) {
+                                    enemyWallCollisionCheck(entity, wall);
+                                })
+                            }
                         })
                     }
                 }
             },
 
+            // keep track of which side of the enemy the wall is on
+            handleEnemyWallCollision(data, enemy, wall) {
+                // floaters go through walls
+                if (enemy.enemyType === enemyType.FLOATER) return;
+
+                // easy to read variable names
+                var enemyLeftSide = enemy.x;
+                var enemyRightRisde = enemy.x + enemy.w;
+                var enemyTopSide = enemy.y;
+                var enemyBottomSide = enemy.y + enemy.h;
+                var wallLeftSide = wall.x;
+                var wallRightSide = wall.x + wall.w;
+                var wallTopSide = wall.y;
+                var wallBottomSide = wall.y + wall.h;
+
+                var againstWall = {
+                    left: true,
+                    right: true,
+                    top: true,
+                    bottom: true
+                }
+
+                // simple logic. Can be improved if needed
+                if (wallBottomSide > enemyBottomSide) againstWall.top = false;
+                if (wallTopSide < enemyTopSide) againstWall.bottom = false;
+                if (wallLeftSide < enemyLeftSide) againstWall.right = false;
+                if (wallRightSide < enemyRightRisde) againstWall.right = false;
+
+                enemy.againstWall = againstWall;
+            },
+
             // biggest freaking function in the game
-            handleCollision(data, entity) {
+            handlePlayerCollision(data, entity) {
                 // easy to read variables
                 var player = data.entities.player;
                 var playerLeftSide = player.x;
@@ -410,6 +507,20 @@
                 // when in ghost state, collisions can't happen (except edge walls still work)
                 var isEdgeWall = entity.type === WALL && entity.wallType === WALL;
                 if (player.inGhostState && !isEdgeWall) return;
+
+                if (entity.type === FOOD) {
+                    // adjust the player's points
+                    data.entities.player.points += entity.value;
+
+                    // remove the food from the array
+                    var indexToRemove = data.entities.foodArray.indexOf(entity);
+                    data.entities.foodArray.splice(indexToRemove, 1)
+
+                    // check if the level is finished
+                    if (data.entities.foodArray.length === 0) {
+                        // go to the next level at some point
+                    }
+                }
 
                 if (entity.type === WALL) {
                     var wallLeftSide = entity.x;
@@ -457,23 +568,16 @@
                     }
                 }
 
-                if (entity.type === FOOD) {
-                    // adjust the player's points
-                    data.entities.player.points += entity.value;
-
-                    // remove the food from the array
-                    var indexToRemove = data.entities.foodArray.indexOf(entity);
-                    data.entities.foodArray.splice(indexToRemove, 1)
-
-                    // check if the level is finished
-                    if (data.entities.foodArray.length === 0) {
-                        // go to the next level at some point
-                    }
-                }
-
                 if (entity.type === ENEMY) {
+                    // enemy dies and player gets the points equal to their strength
+                    // I could assign a enemy.pointValue if needed instead of their strength?
+                    if (player.strength > entity.strength) {
+                        data.entities.enemiesArray.splice(entity, 1);
+                        player.points += entity.strength;
+                    }
                     // player loses a life and enters ghost state for a short time
-                    if (player.strength < entity.strength) {
+                    // the enemy freezes momentarily while the player escapes
+                    else {
                         player.lives--;
 
                         // check if game is over
@@ -484,6 +588,8 @@
 
                         player.inGhostState = true;
                         player.enteredGhostStateTimestamp = new Date().getTime();
+                        entity.frozen = true;
+                        entity.frozenTimestamp = new Date().getTime();
                     }
                 }
             }
