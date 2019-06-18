@@ -9,8 +9,6 @@ The highest levels should be really hard or near impossible to beat.
 Completing the highest level can take you back to level 1, but your points/powerups remain
 Bad guys & the user should have a speed and a strength displayed
 	- Whoever has higher strength wins (you vs them)
-Different kinds of bad guys do different things, move in different ways?
-	- one could go through walls but move slow, another could be super fast but only go in circles, etc
 Warp locations that only the player can use?
 
 You can pause the game and visit the store, where you can buy powerups using $$$
@@ -34,5 +32,7 @@ There is a map with obstacles that you live on
 you're a guy that runs around and eats numbers on the map. 
 The numbers are points and have different colors
 There are computer generated bots that can kill you
+Different kinds of bad guys do different things, move in different ways?
+	- one could go through walls but move slow, another could be super fast but only go in circles, etc
 
 
