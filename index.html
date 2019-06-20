@@ -51,9 +51,16 @@
         // Player input
         var Input = {
             init: function (data) {
-                var self = this;
+                this.setMovementKeys(data);
+                this.setMenuKeys(data);
+            },
 
+            setMovementKeys: function (data) {
                 $(window).on('keydown', function () {
+                    // keeps arrow keys from scrolling the page
+                    if (event.keyCode >= 37 && event.keyCode <= 40) {
+                        event.preventDefault();
+                    }
                     Input.helpers.down[event.keyCode] = true;
                 });
 
@@ -61,6 +68,95 @@
                     delete Input.helpers.down[event.keyCode];
                     delete Input.helpers.pressed[event.keyCode];
                 })
+            },
+
+            setMenuKeys: function (data) {
+                $(window).on('keypress', function () {
+                    // space bar pauses game which opens menu
+                    if (event.keyCode === 32) {
+                        data.gameRunning = !data.gameRunning;
+                    }
+                    // while menu is open, hotkeys trigger menu transactions
+                    if (!data.gameRunning) {
+                        Input.handleShopPurchases(data, event);
+                    }
+                })
+            },
+
+            handleShopPurchases(data, event) {
+                // for now all items are permanent upgrades and can be purchased infinite times. 
+                // we can change either of those realities later if needed
+                var shopItems = {
+                    // trade points for money
+                    KeyO: {
+                        cost: 25,
+                        costType: 'money',
+                        points: 4,
+                    },
+                    KeyP: {
+                        cost: 50,
+                        costType: 'money',
+                        points: 9,
+                    },
+                    KeyK: {
+                        cost: 4,
+                        costType: 'points',
+                        money: 20
+                    },
+                    KeyL: {
+                        cost: 8,
+                        costType: 'points',
+                        money: 42
+                    },
+                    // buy powerups
+                    KeyQ: {
+                        cost: 10,
+                        costType: 'money',
+                        strength: 1,
+                    },
+                    KeyW: {
+                        cost: 10,
+                        costType: 'money',
+                        speed: 0.2,
+                    },
+                    KeyE: {
+                        cost: 100,
+                        costType: 'money',
+                        lives: 1
+                    },
+                    KeyR: {
+                        cost: 500,
+                        costType: 'money',
+                        foodPointsIncrementer: 1
+                    }
+                }
+                var shopItem = shopItems[event.code];
+                if (!shopItem) return;
+
+                var player = data.entities.player;
+                // costType could be money or points
+                var playersBalanceOfCostType = player[shopItem.costType]
+                // see if player can purchase
+                if (playersBalanceOfCostType < shopItem.cost) {
+                    return alert('You dont have enough ' + shopItem.costType + ' for that item. \nCost: ' + shopItem.cost + ' \nYou have ' + playersBalanceOfCostType)
+                }
+
+                // copy the item so we can change it without changing the store's items
+                var changesToPlayer = JSON.parse(JSON.stringify(shopItem));
+
+                // the cost type is either points/money so we change that attribute on the player
+                // object by the cost amount * -1
+                changesToPlayer[shopItem.costType] = changesToPlayer.cost * -1;
+                delete changesToPlayer.cost;
+                delete changesToPlayer.costType;
+
+                // at this point the item represents the changes to the player object that need to happen
+                for (var key in changesToPlayer) {
+                    player[key] += changesToPlayer[key]
+                }
+
+                // each time something is purchased, redraw the menu
+                Game.showMenu(data)
             },
 
             update: function (data) {
@@ -137,10 +233,13 @@
                 var wallLocations = hudWalls.concat(edgeWalls);
 
                 var enemyLocations = [
-                    [200, 200, 20, 2, enemyType.NORMAL],
-                    [500, 320, 10, 3.05, enemyType.SPEEDY],
-                    [800, 150, 50, 1, enemyType.TANK],
-                    [50, 700, 20, 1, enemyType.FLOATER],
+                    // [200, 200, 20, 2, enemyType.NORMAL],
+                    // [500, 200, 20, 2, enemyType.NORMAL],
+                    // [200, 300, 20, 2, enemyType.NORMAL],
+                    // [300, 200, 20, 2, enemyType.NORMAL],
+                    // [500, 320, 10, 3.05, enemyType.SPEEDY],
+                    // [800, 150, 50, 1, enemyType.TANK],
+                    [50, 500, 20, 1, enemyType.FLOATER],
                 ]
 
                 var foodLocations = [
@@ -230,6 +329,10 @@
                     this.inGhostState = false;
                     this.enteredGhostStateTimestamp = null;
                     this.ghostStateDuration = 5000;
+                    // money is used to buy things in the shop
+                    this.money = 2000;
+                    // food is worth this many extra points for the player
+                    this.foodPointsIncrementer = 0;
 
                     this.update = function (data) {
                         this.color = 'white';
@@ -251,8 +354,8 @@
                             if (data.animationFrame % 8 === 0) this.color = 'black';
 
                             // see if it's time to end ghost state
-                            let now = new Date().getTime();
-                            let ghostStateTimeElapsed = now - this.enteredGhostStateTimestamp;
+                            var now = new Date().getTime();
+                            var ghostStateTimeElapsed = now - this.enteredGhostStateTimestamp;
                             if (ghostStateTimeElapsed > this.ghostStateDuration) {
                                 this.inGhostState = false;
                                 this.enteredGhostStateTimestamp = null;
@@ -300,21 +403,28 @@
                 },
 
                 Enemy: function (x, y, strength, speed, enemyType = 'normal') {
+                    // we'll use the id to make sure we delete the right enemy on collision
+                    this.id = random(0, 1000000000);
                     this.x = x;
                     this.y = y;
-                    this.strength = strength;
-                    this.speed = speed;
-                    this.enemyType = enemyType;
                     this.color = 'red';
                     this.type = ENEMY;
+                    this.enemyType = enemyType;
+                    this.speed = speed;
+                    // used to determine if the player kills the bot or vice versa
+                    this.strength = strength;
+                    // when the player is caught, the bots freeze for a bit
                     this.frozen = false;
                     this.frozenTimestamp = null;
+                    // keeps track of which sides of the bot are against a wall
                     this.againstWall = {
                         left: false,
                         right: false,
                         top: false,
                         bottom: false
                     }
+                    // used when the bot can't move towards the player due to a wall
+                    this.randomSide = 'left';
 
                     // faster ones are bigger so you can lose them in small spaces
                     var sizeMap = {
@@ -333,21 +443,55 @@
                     this.update = function (data) {
 
                         var player = data.entities.player;
-                        // if it's frozen, see if it's time to unfreeze
-                        // for now the freeze time will be equal to the speed
+
+                        // if enemy is not frozen, move somewhere
+                        if (!this.frozen) {
+                            var hasMoved = false;
+                            // move towards the player if possible
+                            if (player.x < this.x && !this.againstWall.left) {
+                                hasMoved = true;
+                                this.x -= this.speed;
+                            }
+                            if (player.x > this.x && !this.againstWall.right) {
+                                hasMoved = true;
+                                this.x += this.speed;
+                            }
+                            if (player.y < this.y && !this.againstWall.top) {
+                                hasMoved = true;
+                                this.y -= this.speed;
+                            }
+                            if (player.y > this.y && !this.againstWall.bottom) {
+                                hasMoved = true;
+                                this.y += this.speed;
+                            }
+                            // if enemy hasn't moved yet, try and move any direction we're able
+                            if (!hasMoved) {
+                                var sides = ['left', 'right', 'top', 'bottom'];
+
+                                // take out sides that are against a wall
+                                for (var i = sides.length - 1; i >= 0; i--) {
+                                    if (this.againstWall[sides[i]]) {
+                                        sides.splice(i, 1)
+                                    }
+                                }
+
+                                if (sides.length === 0) {
+                                    // bot is stuck inside 4 walls. this should never happen
+                                    console.log('bot is stuck on all 4 walls. how?')
+                                } else {
+                                    this.moveRandom(sides);
+                                }
+                            }
+                        }
+
+                        // if enemy is frozen, see if it's time to unfreeze
+                        // for now the freeze time will be equal to the speed, so faster ones are frozen longer
                         if (this.frozen) {
-                            let now = new Date().getTime();
+                            var now = new Date().getTime();
                             if (now - this.frozenTimestamp > this.speed * 1000) {
                                 this.frozen = false;
                                 this.frozenTimestamp = null;
                             }
-                        }
-                        // otherwise see which direction to go
-                        else {
-                            if (player.x < this.x && !this.againstWall.left) this.x -= this.speed;
-                            if (player.x > this.x && !this.againstWall.right) this.x += this.speed;
-                            if (player.y < this.y && !this.againstWall.top) this.y -= this.speed;
-                            if (player.y > this.y && !this.againstWall.bottom) this.y += this.speed;
                         }
 
                         // after updating the location reset the wall info
@@ -357,6 +501,19 @@
                             top: false,
                             bottom: false
                         }
+                    }
+
+                    this.moveRandom = function (availableSides) {
+                        // random side only switches when it's against a wall that prevents current randomSide movement
+                        if (!availableSides.includes(this.randomSide)) {
+                            this.randomSide = availableSides[random(0, availableSides.length)];
+                        }
+                        // move in that direction
+                        if (this.randomSide === 'left') this.x -= this.speed;
+                        if (this.randomSide === 'right') this.x += this.speed;
+                        if (this.randomSide === 'top') this.y -= this.speed;
+                        if (this.randomSide === 'bottom') this.y += this.speed;
+                        return;
                     }
                 },
 
@@ -385,43 +542,63 @@
         // Render Script
         var Render = {
             init: function (data) {
-                Render.helpers.drawEntity(data.entities.background, data.canvas.context);
+                Render.helpers.drawEntity(data.entities.background);
             },
 
             update: function (data) {
-                data.canvas.context.clearRect(0, 0, data.canvas.canvas.width, data.canvas.canvas.height);
+                this.clearCanvas(data.canvas);
 
-                var pointsText = new Entities.helpers.Score(data.entities.player.points)
-                var livesText = new Entities.helpers.Lives(data.entities.player.lives)
+                var pointsText = new Entities.helpers.Score('Points: ' + data.entities.player.points)
+                var livesText = new Entities.helpers.Lives('Lives: ' + data.entities.player.lives)
 
-                Render.helpers.drawText(pointsText, data.canvas.context, "Points: ");
-                Render.helpers.drawText(livesText, data.canvas.context, 'Lives: ');
+                Render.helpers.drawText(pointsText);
+                Render.helpers.drawText(livesText);
 
                 // draw all of the entities listed in arrays in the data object
                 for (var entityType in data.entities) {
                     if (Array.isArray(data.entities[entityType])) {
                         data.entities[entityType].forEach(function (entity) {
-                            Render.helpers.drawEntity(entity, data.canvas.context);
+                            Render.helpers.drawEntity(entity);
                         })
                     }
                 }
 
                 // draw the player last so they show up on top of everything else
-                Render.helpers.drawEntity(data.entities.player, data.canvas.context);
+                Render.helpers.drawEntity(data.entities.player);
 
+            },
+
+            clearCanvas: function (canvas) {
+                canvas.context.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height)
             },
 
             helpers: {
                 drawEntity: function (entity, ctx, color) {
+                    // default ctx to the game canvas
+                    if (!ctx) ctx = document.getElementById('gameCanvas').getContext('2d');
+
+                    // if color is passed in but no ctx, fix that
+                    if (!color && typeof ctx === 'string') {
+                        color = ctx;
+                        ctx = document.getElementById('gameCanvas').getContext('2d');
+                    }
+
                     ctx.fillStyle = color ? color : entity.color ? entity.color : 'white';
                     ctx.fillRect(entity.x, entity.y, entity.w, entity.h);
                 },
 
-                drawText: function (text, ctx, prefix) {
-                    prefix = prefix ? prefix : '';
+                drawText: function (text, ctx) {
+                    // default ctx to the game canvas
+                    if (!ctx) ctx = document.getElementById('gameCanvas').getContext('2d');
+
+                    // default values for drawing text
+                    if (!text.font) text.font = 'Arial';
+                    if (!text.color) text.color = 'white';
+                    if (!text.size) text.size = '20px';
+
                     ctx.font = text.size + ' ' + text.font;
                     ctx.fillStyle = text.color;
-                    ctx.fillText(prefix + text.value, text.x, text.y);
+                    ctx.fillText(text.value, text.x, text.y);
                 }
             }
         }
@@ -517,7 +694,8 @@
 
                 if (entity.type === FOOD) {
                     // adjust the player's points
-                    data.entities.player.points += entity.value;
+                    var foodPoints = entity.value + data.entities.player.foodPointsIncrementer
+                    data.entities.player.points += foodPoints;
 
                     // remove the food from the array
                     var indexToRemove = data.entities.foodArray.indexOf(entity);
@@ -579,8 +757,14 @@
                     // enemy dies and player gets the points equal to their strength
                     // I could assign a enemy.pointValue if needed instead of their strength?
                     if (player.strength > entity.strength) {
-                        data.entities.enemiesArray.splice(entity, 1);
-                        player.points += entity.strength;
+                        var enemies = data.entities.enemiesArray;
+                        for (var i = enemies.length - 1; i >= 0; i--) {
+                            if (enemies[i].id === entity.id) {
+                                player.points += entity.strength;
+                                data.entities.enemiesArray.splice(i, 1);
+                                break;
+                            }
+                        }
                     }
                     // player loses a life and enters ghost state for a short time
                     // the enemy freezes momentarily while the player escapes
@@ -595,8 +779,16 @@
 
                         player.inGhostState = true;
                         player.enteredGhostStateTimestamp = new Date().getTime();
-                        entity.frozen = true;
-                        entity.frozenTimestamp = new Date().getTime();
+
+                        // freezes all enemies once the player is hit
+                        data.entities.enemiesArray.forEach(function (enemy) {
+                            enemy.frozen = true;
+                            enemy.frozenTimestamp = new Date().getTime();
+                        })
+
+                        // freezes just the enemy that hit the player
+                        // entity.frozen = true;
+                        // entity.frozenTimestamp = new Date().getTime();
                     }
                 }
             }
@@ -629,18 +821,23 @@
 
             run: function (data) {
                 var loop = function () {
-                    // end the loop if game is over or not running
-                    if (data.gameOver || !data.gameRunning) {
+                    // end the loop if game is over
+                    if (data.gameOver) {
                         Game.showGameOver(data);
                         return;
                     }
 
-                    Game.input(data);
-                    Game.update(data);
-                    Game.render(data);
+                    // if game is not paused, update things
+                    if (data.gameRunning) {
+                        Game.input(data);
+                        Game.update(data);
+                        Game.render(data);
+                    } else {
+                        Game.showMenu(data);
+                    }
 
+                    // keep the loop going
                     data.animationFrame++;
-
                     window.requestAnimationFrame(loop);
                 }
 
@@ -662,13 +859,92 @@
 
             showGameOver(data) {
                 Render.helpers.drawText({
-                    color: 'white',
                     x: 200,
                     y: 300,
                     size: '40px',
-                    font: 'Arial',
                     value: 'Game Over. Final Score: ' + data.entities.player.points
-                }, data.canvas.context)
+                })
+            },
+
+            showMenu(data) {
+                Render.clearCanvas(data.canvas);
+                // title
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width / 2 - 80,
+                    y: 50,
+                    size: '30px',
+                    value: 'Shop!!!'
+                });
+                // Shows the player
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width - 240,
+                    y: 50,
+                    value: 'You'
+                });
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width - 240,
+                    y: 80,
+                    value: 'Points: ' + data.entities.player.points
+                });
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width - 240,
+                    y: 110,
+                    value: 'Money: $' + data.entities.player.money
+                });
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width - 240,
+                    y: 140,
+                    value: 'Strength: ' + data.entities.player.strength
+                });
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width - 240,
+                    y: 170,
+                    value: 'Speed: ' + Math.floor(data.entities.player.speed * 100)
+                });
+
+                // Trade points for money
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width - 300,
+                    y: 250,
+                    value: 'O: Trade $25 for 4 points'
+                })
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width - 300,
+                    y: 280,
+                    value: 'P: Trade $50 for 9 points'
+                })
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width - 300,
+                    y: 310,
+                    value: 'K: Trade 4 points for $20'
+                })
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width - 300,
+                    y: 340,
+                    value: 'L: Trade 8 points for $42'
+                })
+
+                // shop items
+                Render.helpers.drawText({
+                    x: 50,
+                    y: 100,
+                    value: 'Q: Strength Potion - 1 strength - $10'
+                })
+                Render.helpers.drawText({
+                    x: 50,
+                    y: 130,
+                    value: 'W: Speed Potion - 20 speed - $10'
+                })
+                Render.helpers.drawText({
+                    x: 50,
+                    y: 160,
+                    value: 'E: Extra Life - 1 life - $100'
+                })
+                Render.helpers.drawText({
+                    x: 50,
+                    y: 190,
+                    value: 'R: Food worth more points - $500'
+                })
             }
         }
 

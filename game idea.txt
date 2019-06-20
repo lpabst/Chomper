@@ -2,6 +2,7 @@ Game Idea, vanilla JS host on heroku
 
 TODO
 
+gameplay
 Eating all of the numbers on a level takes you to the next level
 Each level has a different map layout, higher point numbers, and more bad guys
 Every now and then I'll have a money dollar sign pop up on the screen that you can collect
@@ -11,16 +12,6 @@ Bad guys & the user should have a speed and a strength displayed
 	- Whoever has higher strength wins (you vs them)
 Warp locations that only the player can use?
 
-You can pause the game and visit the store, where you can buy powerups using $$$
-While in the store, you slowly lose points, don't spend too long there
-Each item must be purchased using money $$$ 
-We'll have a button to trade points for $$$, but the house takes a cut! trade wisely
-powerups can increase the amount of points you see on the screen
-powerups can grant you temporary or permanent strength to kill bad guys
-powerups can grant you extra lives
-
-There will be a HUD that shows your lives, points, level you're on, etc...
-
 I don't want a backend or security, so high scores will be kept in the localStorage
 
 
@@ -28,11 +19,20 @@ I don't want a backend or security, so high scores will be kept in the localStor
 
 DONE
 
+gameplay
 There is a map with obstacles that you live on
 you're a guy that runs around and eats numbers on the map. 
 The numbers are points and have different colors
 There are computer generated bots that can kill you
 Different kinds of bad guys do different things, move in different ways?
 	- one could go through walls but move slow, another could be super fast but only go in circles, etc
+There will be a HUD that shows your lives, points, level you're on, etc...
+Better bad guy movement logic to not get stuck if you're on the other side of a walls
+when player is blinking, bad guys stop moving
 
-
+shop
+You can pause the game and visit the store, where you can buy powerups using $$$
+Each item must be purchased using money $$$ 
+powerups can increase the amount of points you see on the screen
+powerups can grant you temporary or permanent strength to kill bad guys
+powerups can grant you extra lives
