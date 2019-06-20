@@ -35,6 +35,7 @@
         var ENEMY = 'ENEMY';
         var FOOD = 'FOOD';
         var SCORE = 'SCORE';
+        var HUDTEXT = 'HUDTEXT';
         var LIVES = 'LIVES';
         var enemyType = {
             NORMAL: 'NORMAL', // default
@@ -43,9 +44,72 @@
             FLOATER: 'FLOATER' // slow and can go through walls
         }
 
+        // HUD area 0 - 140 && 0 - 88
+        var hudWalls = [[0, 80, 140, 8, true], [140, 0, 8, 88, true]];
+        var edgeWalls = [[0, 0, 1000, 8, true], [0, 0, 8, 1000, true], [0, 1000, 1000, 8, true], [1000, 0, 8, 1000, true]]
+
+        // entities per level map
+        var entitiesForLevel = {
+            1: {
+                playerStartLocation: {
+                    x: 100,
+                    y: 100
+                },
+                obstacles: [
+                    [80, 420, 420, 8], [170, 20, 600, 8], [620, 20, 8, 80], [120, 110, 480, 8], [170, 45, 8, 55], [200, 20, 8, 55], [300, 45, 8, 55], [400, 20, 8, 55]
+                ],
+                enemyLocations: [
+                    // [200, 200, 20, 2, enemyType.NORMAL],
+                    // [500, 200, 20, 2, enemyType.NORMAL],
+                    // [200, 300, 20, 2, enemyType.NORMAL],
+                    // [300, 200, 20, 2, enemyType.NORMAL],
+                    // [500, 320, 10, 3.05, enemyType.SPEEDY],
+                    // [800, 150, 50, 1, enemyType.TANK],
+                    [50, 500, 20, 1, enemyType.FLOATER],
+                ],
+                foodLocations: [
+                    [300, 400, 1],
+                    [350, 400, 2],
+                    [400, 400, 3],
+                    [450, 400, 4],
+                    [500, 400, 5],
+                    [550, 400, 6],
+                    [600, 400, 7],
+                    [650, 400, 8],
+                    [700, 400, 9],
+                ]
+            },
+            2: {
+                playerStartLocation: {
+                    x: 500,
+                    y: 500
+                },
+                obstacles: [
+                    [80, 420, 420, 8]
+                ],
+                enemyLocations: [
+                    [50, 500, 20, 1, enemyType.NORMAL]
+                ],
+                foodLocations: [
+                    [300, 400, 5]
+                ]
+            }
+        }
+
+        // random number generator
         function random(low, high, includeHigh) {
             var inclusiveIncrementer = includeHigh ? 1 : 0
             return Math.floor(Math.random() * (high - low + inclusiveIncrementer)) + low;
+        }
+
+        // checks if an entity is in the HUD area
+        function hudCheck(entity, ignoreHudAreaWarning) {
+            var rightSideOfHUD = hudWalls[0][2];
+            var bottomOfHUD = hudWalls[1][2]
+            if (!ignoreHudAreaWarning && entity.x < rightSideOfHUD && entity.y < bottomOfHUD) {
+                console.warn('In the HUD area');
+                console.log(entity);
+            }
         }
 
         // Player input
@@ -224,35 +288,7 @@
                     h: 800,
                 };
 
-                var player = new Entities.helpers.player(300, 300);
-
-                // HUD area 0 - 140 && 0 - 88
-                var hudWalls = [[0, 80, 140, 8, true], [140, 0, 8, 88, true]];
-                var edgeWalls = [[0, 0, 1000, 8, true], [0, 0, 8, 1000, true], [0, 1000, 1000, 8, true], [1000, 0, 8, 1000, true]]
-                var obstacles = [[80, 420, 420, 8], [170, 20, 600, 8], [620, 20, 8, 80], [120, 110, 480, 8], [170, 45, 8, 55], [200, 20, 8, 55], [300, 45, 8, 55], [400, 20, 8, 55]];
-                var wallLocations = hudWalls.concat(edgeWalls);
-
-                var enemyLocations = [
-                    // [200, 200, 20, 2, enemyType.NORMAL],
-                    // [500, 200, 20, 2, enemyType.NORMAL],
-                    // [200, 300, 20, 2, enemyType.NORMAL],
-                    // [300, 200, 20, 2, enemyType.NORMAL],
-                    // [500, 320, 10, 3.05, enemyType.SPEEDY],
-                    // [800, 150, 50, 1, enemyType.TANK],
-                    [50, 500, 20, 1, enemyType.FLOATER],
-                ]
-
-                var foodLocations = [
-                    [300, 400, 1],
-                    [350, 400, 2],
-                    [400, 400, 3],
-                    [450, 400, 4],
-                    [500, 400, 5],
-                    [550, 400, 6],
-                    [600, 400, 7],
-                    [650, 400, 8],
-                    [700, 400, 9],
-                ]
+                var player = new Entities.helpers.player();
 
                 data.entities = {
                     background: background,
@@ -262,17 +298,8 @@
                     foodArray: [],
                 };
 
-                // see if anything is in the HUD area
-                function hudCheck(entity, ignoreHudAreaWarning) {
-                    for (var i = 0; i < hudWalls.length; i++) {
-                        if (!ignoreHudAreaWarning && entity.x < hudWalls[i][0] + hudWalls[i][2] && entity.y < hudWalls[i][1] + hudWalls[i][3]) {
-                            console.warn('In the HUD area');
-                            console.log(entity);
-                        }
-                    }
-                }
-
-
+                // put the walls up
+                var wallLocations = hudWalls.concat(edgeWalls);
                 wallLocations.forEach(function (wall) {
                     var wallObj = new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3], WALL);
                     var ignoreHudAreaWarning = wall[4];
@@ -280,21 +307,49 @@
                     data.entities.wallsArray.push(wallObj)
                 })
 
-                obstacles.forEach(function (wall) {
+                this.initLevelSpecificEntities(data);
+            },
+
+            clearLevelSpecificEntities: function (data) {
+                // remove all enemies and food
+                data.entities.enemiesArray = [];
+                data.entities.foodArray = [];
+                // remove obstacle walls, keep edge and HUD walls
+                var newWallsArray = [];
+                data.entities.wallsArray.forEach(function (wall) {
+                    if (wall.wallType === WALL) newWallsArray.push(wall);
+                })
+                data.entities.wallsArray = newWallsArray;
+            },
+
+            initLevelSpecificEntities: function (data) {
+                // clear all level specific entities from previous levels
+                this.clearLevelSpecificEntities(data);
+
+                // if the player has completed all of the levels, we'll take them back to level 1
+                if (!entitiesForLevel[data.gameLevel]) data.gameLevel = 1;
+                // get the entities specific to this level
+                var entitiesForThisLevel = entitiesForLevel[data.gameLevel];
+
+                // move the player to the start location for this level
+                data.entities.player.x = entitiesForThisLevel.playerStartLocation.x
+                data.entities.player.y = entitiesForThisLevel.playerStartLocation.y
+
+                entitiesForThisLevel.obstacles.forEach(function (wall) {
                     var wallObj = new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3], OBSTACLE);
                     var ignoreHudAreaWarning = wall[4];
                     hudCheck(wallObj, ignoreHudAreaWarning);
                     data.entities.wallsArray.push(wallObj)
                 })
 
-                enemyLocations.forEach(function (enemy) {
+                entitiesForThisLevel.enemyLocations.forEach(function (enemy) {
                     var enemyObj = new Entities.helpers.Enemy(enemy[0], enemy[1], enemy[2], enemy[3], enemy[4]);
                     hudCheck(enemyObj);
                     data.entities.enemiesArray.push(enemyObj)
                 })
 
                 // put pieces of food on the board
-                foodLocations.forEach(function (food) {
+                entitiesForThisLevel.foodLocations.forEach(function (food) {
                     var foodObj = new Entities.helpers.Food(food[0], food[1], food[2])
                     hudCheck(foodObj, false);
                     data.entities.foodArray.push(foodObj)
@@ -309,13 +364,14 @@
             },
 
             helpers: {
-                player: function (x, y, w, h) {
+                player: function () {
                     var self = this;
                     this.type = PLAYER;
                     this.points = 0;
 
-                    this.x = x;
-                    this.y = y;
+                    // x & y will get set per level so these values don't matter
+                    this.x = 100;
+                    this.y = 100;
                     this.w = 20;
                     this.h = 20;
                     this.color = 'white';
@@ -517,24 +573,14 @@
                     }
                 },
 
-                Score: function (value) {
+                HUDText: function (y, value) {
                     this.x = 10;
-                    this.y = 30;
+                    this.y = y;
                     this.value = value;
-                    this.size = "25px";
+                    this.size = '25px';
                     this.font = 'Arial';
                     this.color = 'green';
-                    this.type = SCORE;
-                },
-
-                Lives: function (value) {
-                    this.x = 10;
-                    this.y = 60;
-                    this.value = value;
-                    this.size = "25px";
-                    this.font = 'Arial';
-                    this.color = 'green';
-                    this.type = LIVES;
+                    this.type = HUDTEXT
                 }
             }
         }
@@ -548,9 +594,11 @@
             update: function (data) {
                 this.clearCanvas(data.canvas);
 
-                var pointsText = new Entities.helpers.Score('Points: ' + data.entities.player.points)
-                var livesText = new Entities.helpers.Lives('Lives: ' + data.entities.player.lives)
+                var levelText = new Entities.helpers.HUDText(27, 'Level: ' + data.gameLevel)
+                var pointsText = new Entities.helpers.HUDText(51, 'Points: ' + data.entities.player.points)
+                var livesText = new Entities.helpers.HUDText(75, 'Lives: ' + data.entities.player.lives)
 
+                Render.helpers.drawText(levelText);
                 Render.helpers.drawText(pointsText);
                 Render.helpers.drawText(livesText);
 
@@ -703,7 +751,15 @@
 
                     // check if the level is finished
                     if (data.entities.foodArray.length === 0) {
-                        // go to the next level at some point
+                        // pause the game (opens the shop) & go to the next level
+                        // the pause is just for UX, doesn't really serve a purpose
+                        data.buildingLevel = true;
+                        data.gameRunning = false;
+                        setTimeout(function () {
+                            data.gameLevel++;
+                            data.buildingLevel = false;
+                            Entities.initLevelSpecificEntities(data)
+                        }, 500)
                     }
                 }
 
@@ -809,7 +865,8 @@
                     animationFrame: 0,
                     canvas: canvas,
                     gameOver: false,
-                    gameRunning: true
+                    gameRunning: true,
+                    gameLevel: 3
                 }
 
                 Entities.init(data);
@@ -828,7 +885,7 @@
                     }
 
                     // if game is not paused, update things
-                    if (data.gameRunning) {
+                    if (data.gameRunning && !data.buildingLevel) {
                         Game.input(data);
                         Game.update(data);
                         Game.render(data);
@@ -943,7 +1000,7 @@
                 Render.helpers.drawText({
                     x: 50,
                     y: 190,
-                    value: 'R: Food worth more points - $500'
+                    value: 'R: Increase food point values by 1 - $500'
                 })
             }
         }
