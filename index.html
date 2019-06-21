@@ -52,8 +52,8 @@
         var entitiesForLevel = {
             1: {
                 playerStartLocation: {
-                    x: 100,
-                    y: 100
+                    x: 300,
+                    y: 300
                 },
                 obstacles: [
                     [80, 420, 420, 8], [170, 20, 600, 8], [620, 20, 8, 80], [120, 110, 480, 8], [170, 45, 8, 55], [200, 20, 8, 55], [300, 45, 8, 55], [400, 20, 8, 55]
@@ -79,7 +79,7 @@
                     [700, 400, 9],
                 ],
                 moneyItems: [
-                    { x: 50, y: 50, value: 20, delayFromStartToShow: 5000, delayFromStartToDie: 15000 },
+                    { x: 350, y: 350, value: 20, delayFromStartToShow: 5000, delayFromStartToDie: 15000 },
                     { x: 200, y: 200, value: 20, delayFromStartToShow: 1000, delayFromStartToDie: 2000 },
                 ]
             },
@@ -635,20 +635,22 @@
                     this.value = moneyObj.value;
                     this.delayFromStartToShow = moneyObj.delayFromStartToShow;
                     this.delayFromStartToDie = moneyObj.delayFromStartToDie;
-                    this.w = 20;
-                    this.h = 20;
+                    this.w = 13;
+                    this.h = 13;
                     this.color = 'green';
                     this.alive = false;
 
                     this.text = function () {
-                        return ['$$$']
+                        return ['$$']
                     }
 
                     this.update = function (data) {
                         // shows up when it should & dies when it should
-                        var timeSinceLevelStart = data.gameLevelStartTime - new Date().getTime();
+                        var timeSinceLevelStart = new Date().getTime() - data.gameLevelStartTime;
                         if (timeSinceLevelStart > this.delayFromStartToShow && timeSinceLevelStart < this.delayFromStartToDie) {
                             this.alive = true;
+                        } else {
+                            this.alive = false;
                         }
 
                         // blinks sometimes & blinks faster before it dies
@@ -700,9 +702,11 @@
                 for (var entityType in data.entities) {
                     if (Array.isArray(data.entities[entityType])) {
                         data.entities[entityType].forEach(function (entity) {
-                            if (entity.type === MONEYFOOD && entity.alive) {
-                                // money only gets drawn when it's alive
-                                Render.helpers.drawEntity(entity);
+                            if (entity.type === MONEYFOOD) {
+                                if (entity.alive) {
+                                    // money only gets drawn when it's alive
+                                    Render.helpers.drawEntity(entity);
+                                }
                             } else {
                                 // everything else gets drawn always
                                 Render.helpers.drawEntity(entity);
