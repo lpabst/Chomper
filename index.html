@@ -1388,8 +1388,13 @@
                     Render.helpers.drawEntity(money)
                 })
                 warpLocations.forEach(function (warpObj) {
+                    var exit = new Entities.helpers.Warp(warpObj.exit);
                     var warp = new Entities.helpers.Warp(warpObj);
-                    Render.helpers.drawEntity(warp);
+                    warp.r = warp.size
+                    exit.r = exit.size;
+                    warp.exit = exit;
+                    Render.helpers.drawCircle(warp);
+                    Render.helpers.drawCircle(exit);
                 })
             }
 

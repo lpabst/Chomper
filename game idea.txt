@@ -7,6 +7,11 @@ build some levels
 Hosting
 vanilla JS host on heroku
 
+gameplay
+hitting multiple enemies at once should take 1 life only
+bad guys shouldn't phase through walls....
+bad guys are still dumb chasers
+items should cost more as you buy more of them OR bad guys should get stronger each level...?
 
 
 DONE
