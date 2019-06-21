@@ -34,7 +34,7 @@
         var PLAYER = 'PLAYER';
         var ENEMY = 'ENEMY';
         var FOOD = 'FOOD';
-        var SCORE = 'SCORE';
+        var MONEYFOOD = 'MONEYFOOD';
         var HUDTEXT = 'HUDTEXT';
         var LIVES = 'LIVES';
         var enemyType = {
@@ -113,6 +113,15 @@
             if (!ignoreHudAreaWarning && entity.x < rightSideOfHUD && entity.y < bottomOfHUD) {
                 console.warn('In the HUD area');
                 console.log(entity);
+            }
+        }
+
+        function removeFromArrayById(arr, id) {
+            for (var i = arr.length - 1; i >= 0; i--) {
+                if (arr[i].id === id) {
+                    arr.splice(i, 1);
+                    return;
+                }
             }
         }
 
@@ -480,6 +489,8 @@
                         return colorMap[this.value]
                     }
 
+                    // we use id during collision to remove proper item from array
+                    this.id = random(100000, 1000000000);
                     this.x = x ? x : random(0, data.canvas.width)
                     this.y = y ? y : random(0, data.canvas.height)
                     this.w = 12;
@@ -497,7 +508,7 @@
 
                 Enemy: function (x, y, strength, speed, enemyType = 'normal') {
                     // we'll use the id to make sure we delete the right enemy on collision
-                    this.id = random(0, 1000000000);
+                    this.id = random(100000, 1000000000);
                     this.x = x;
                     this.y = y;
                     this.color = 'red';
@@ -614,7 +625,11 @@
                     }
                 },
 
+                // can only be eaten when it's 'alive'
                 MoneyFood: function (moneyObj) {
+                    // we use the id for collisions to remove the right one from array
+                    this.id = random(100000, 1000000000)
+                    this.type = MONEYFOOD;
                     this.x = moneyObj.x;
                     this.y = moneyObj.y;
                     this.value = moneyObj.value;
@@ -623,16 +638,30 @@
                     this.w = 20;
                     this.h = 20;
                     this.color = 'green';
+                    this.alive = false;
 
                     this.text = function () {
                         return ['$$$']
                     }
 
                     this.update = function (data) {
-                        // show up when it should
-                        // die when it should
-                        // blink sometimes
-                        // blink faster before it dies!
+                        // shows up when it should & dies when it should
+                        var timeSinceLevelStart = data.gameLevelStartTime - new Date().getTime();
+                        if (timeSinceLevelStart > this.delayFromStartToShow && timeSinceLevelStart < this.delayFromStartToDie) {
+                            this.alive = true;
+                        }
+
+                        // blinks sometimes & blinks faster before it dies
+                        if (this.alive) {
+                            var lifespan = this.delayFromStartToDie - this.delayFromStartToShow;
+                            var timeAlive = timeSinceLevelStart - this.delayFromStartToShow;
+                            var percentOfLifeLeft = Math.floor((lifespan - (timeAlive / lifespan)) * 100)
+                            if (data.animationFrame % percentOfLifeLeft === 0) {
+                                this.color = 'black'
+                            } else {
+                                this.color = 'green';
+                            }
+                        }
                     }
                 },
 
@@ -671,7 +700,13 @@
                 for (var entityType in data.entities) {
                     if (Array.isArray(data.entities[entityType])) {
                         data.entities[entityType].forEach(function (entity) {
-                            Render.helpers.drawEntity(entity);
+                            if (entity.type === MONEYFOOD && entity.alive) {
+                                // money only gets drawn when it's alive
+                                Render.helpers.drawEntity(entity);
+                            } else {
+                                // everything else gets drawn always
+                                Render.helpers.drawEntity(entity);
+                            }
                         })
                     }
                 }
@@ -824,8 +859,7 @@
                     data.entities.player.points += foodPoints;
 
                     // remove the food from the array
-                    var indexToRemove = data.entities.foodArray.indexOf(entity);
-                    data.entities.foodArray.splice(indexToRemove, 1)
+                    removeFromArrayById(data.entities.foodArray, entity.id);
 
                     // check if the level is finished
                     if (data.entities.foodArray.length === 0) {
@@ -839,6 +873,16 @@
                             Entities.initLevelSpecificEntities(data)
                         }, 1)
                     }
+                }
+
+                // food can only be eaten when it's alive
+                if (entity.type === MONEYFOOD && entity.alive) {
+                    // adjust the player's money
+                    var moneyValue = entity.value;
+                    data.entities.player.money += moneyValue;
+
+                    // remove the money item from the array
+                    removeFromArrayById(data.entities.moneyArray, entity.id);
                 }
 
                 if (entity.type === WALL) {
@@ -891,14 +935,8 @@
                     // enemy dies and player gets the points equal to their strength
                     // I could assign a enemy.pointValue if needed instead of their strength?
                     if (player.strength > entity.strength) {
-                        var enemies = data.entities.enemiesArray;
-                        for (var i = enemies.length - 1; i >= 0; i--) {
-                            if (enemies[i].id === entity.id) {
-                                player.points += entity.strength;
-                                data.entities.enemiesArray.splice(i, 1);
-                                break;
-                            }
-                        }
+                        removeFromArrayById(data.entities.enemiesArray, entity.id);
+                        player.points += entity.strength;
                     }
                     // player loses a life and enters ghost state for a short time
                     // the enemy freezes momentarily while the player escapes
