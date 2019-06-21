@@ -36,6 +36,7 @@
         var FOOD = 'FOOD';
         var MONEYFOOD = 'MONEYFOOD';
         var HUDTEXT = 'HUDTEXT';
+        var WARP = 'WARP';
         var LIVES = 'LIVES';
         var enemyType = {
             NORMAL: 'NORMAL', // default
@@ -81,6 +82,13 @@
                 moneyItems: [
                     { x: 350, y: 350, value: 20, delayFromStartToShow: 5000, delayFromStartToDie: 15000 },
                     { x: 200, y: 200, value: 20, delayFromStartToShow: 1000, delayFromStartToDie: 2000 },
+                ],
+                warpLocations: [
+                    {
+                        x: 200,
+                        y: 200,
+                        exit: { x: 500, y: 50 }
+                    }
                 ]
             },
             2: {
@@ -96,6 +104,9 @@
                 ],
                 foodLocations: [
                     [300, 400, 5]
+                ],
+                moneyItems: [
+                    { x: 20, y: 20, value: 20, delayFromStartToShow: 2000, delayFromStartToDie: 8000 }
                 ]
             }
         }
@@ -328,6 +339,7 @@
                 data.entities.enemiesArray = [];
                 data.entities.foodArray = [];
                 data.entities.moneyArray = [];
+                data.entities.warpArray = [];
                 // remove obstacle walls, keep edge and HUD walls
                 var newWallsArray = [];
                 data.entities.wallsArray.forEach(function (wall) {
@@ -378,6 +390,12 @@
                     var moneyFoodObj = new Entities.helpers.MoneyFood(obj);
                     hudCheck(moneyFoodObj);
                     data.entities.moneyArray.push(moneyFoodObj);
+                })
+
+                entitiesForThisLevel.warpLocations.forEach(function (warpObject) {
+                    var warpObj = new Entities.helpers.Warp(warpObject);
+                    hudCheck(warpObj);
+                    data.entities.warpArray.push(warpObj);
                 })
 
                 // if we're repeating levels, make the enemies better
@@ -675,6 +693,15 @@
                     this.font = 'Arial';
                     this.color = 'green';
                     this.type = HUDTEXT
+                },
+
+                Warp: function (x, y, exit) {
+                    this.type = WARP;
+                    this.x = x;
+                    this.y = x;
+                    this.r = 20;
+                    this.color = 'orange';
+                    this.exit = exit;
                 }
             }
         }
@@ -702,7 +729,10 @@
                 for (var entityType in data.entities) {
                     if (Array.isArray(data.entities[entityType])) {
                         data.entities[entityType].forEach(function (entity) {
-                            if (entity.type === MONEYFOOD) {
+                            if (entity.type === WARP) {
+                                Render.helpers.drawCircle(entity);
+                            }
+                            else if (entity.type === MONEYFOOD) {
                                 if (entity.alive) {
                                     // money only gets drawn when it's alive
                                     Render.helpers.drawEntity(entity);
@@ -764,6 +794,16 @@
                     ctx.font = text.size + ' ' + text.font;
                     ctx.fillStyle = text.color;
                     ctx.fillText(text.value, text.x, text.y);
+                },
+
+                drawCircle: function (entity, ctx) {
+                    // default ctx to the game canvas
+                    if (!ctx) ctx = document.getElementById('gameCanvas').getContext('2d');
+
+                    ctx.fillStyle = entity.color ? entity.color : 'white';
+                    ctx.beginPath();
+                    ctx.arc(entity.x, entity.y, entity.r, 0, 2 * Math.PI);
+                    ctx.stroke();
                 }
             }
         }
@@ -933,6 +973,11 @@
                         playerRightSide > wallLeftSide + allowanceBuffer) {
                         player.velY = 0;
                     }
+                }
+
+                if (entity.type === WARP) {
+                    player.x = entity.exit.x;
+                    player.y = entity.exit.y;
                 }
 
                 if (entity.type === ENEMY) {

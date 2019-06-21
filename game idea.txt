@@ -2,11 +2,13 @@
 TODO
 
 Gameplay
-Every now and then I'll have a money dollar sign pop up on the screen that you can collect
 Warp locations that only the player can use?
 
 Hosting
 vanilla JS host on heroku
+
+Levels
+build some levels
 
 
 
@@ -17,6 +19,7 @@ There is a map with obstacles that you live on
 you're a guy that runs around and eats numbers on the map. 
 The numbers are points and have different colors
 There are computer generated bots that can kill you
+Every now and then I'll have a money dollar sign pop up on the screen that you can collect
 Different kinds of bad guys do different things, move in different ways?
 	- one could go through walls but move slow, another could be super fast but only go in circles, etc
 There will be a HUD that shows your lives, points, level you're on, etc...
