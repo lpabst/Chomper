@@ -10,23 +10,63 @@
 
 <body>
     <style>
+        body {
+            background: #222;
+        }
+
+        #rulesHeader {
+            text-decoration: underline;
+        }
+
+        #rules {
+            border: 1px solid white;
+            padding-left: 10px;
+            color: #999;
+            font-size: 15px;
+        }
+
         #gameCanvas {
-            width: 1000px;
-            height: 600px;
             background: black;
+            display: none;
         }
     </style>
 
     <main>
-        <canvas id='gameCanvas'></canvas>
+        <canvas id="gameCanvas"></canvas>
+        <button id="newGameButton" onclick="Game.init()">New Game</button>
+        <div id="rules">
+            <h2 id="rulesHeader">How To Play</h2>
+            <p>Use the arrow keys to move around. Try and eat the pieces of food on the board for points</p>
+            <p>Different food colors are worth different amounts of points. Try and earn as many points as you can</p>
+            <p>Enemies are red and will chase you. Each enemy has their strength & speed displayed, as do you</p>
+            <p>If an emeny catches you, whoever has higher strength wins the fight. Ties go to the enemies</p>
+            <p>Losing a fight to an enemy means losing a life. Run out of lives and the game is over</p>
+            <p>After losing a life, your player becomes a ghost for a short time, during which you can move through
+                walls, but cannot use warp points or eat food or money </p>
+            <p>Eating all of the food on a level will take you to the next level</p>
+            <p>Every now and then a green piece of food with '$$' written in it will appear for a short time. Eat it for
+                money</p>
+            <p>Press the *spacebar* to open and close the shop. Finishing a level will also open up the shop</p>
+            <p>Money can be spent in the shop to buy powerups. </p>
+            <p>*Note - you can trade your hard earned points for more money & vice-versa. The house always takes a cut
+            </p>
+            <p>Yours and enemy's movement stops the while shop is open, but the game does not pause, meaning you could
+                miss
+                money appearing while in the shop</p>
+            <p>Blinking red dots are warp points that will transport you to stationary red dots. Only you can use warp
+                points</p>
+            <p>Food Bonus - if your food bonus is 2 and you eat a food worth 4 points, you will earn 6 points</p>
+            <p>See how many points you can end the game with! Have fun</p>
+        </div>
     </main>
 
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"
         integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
     <script>
         // set the w/h of the canvas
-        document.getElementById('gameCanvas').width = 1000;
-        document.getElementById('gameCanvas').height = 600;
+        var canvas = document.getElementById('gameCanvas')
+        canvas.width = 800;
+        canvas.height = 600;
 
         // types
         var WALL = 'WALL';
@@ -47,7 +87,11 @@
 
         // HUD area 0 - 140 && 0 - 88
         var hudWalls = [[0, 90, 150, 8, true], [150, 0, 8, 98, true]];
-        var edgeWalls = [[0, 0, 1000, 8, true], [0, 0, 8, 1000, true], [0, 1000, 1000, 8, true], [1000, 0, 8, 1000, true]]
+        var edgeWalls = [
+            [0, 0, canvas.width, 8, true], // top
+            [0, 0, 8, canvas.height, true], // left
+            [0, canvas.height - 8, canvas.width, 8, true],
+            [canvas.width - 8, 0, 8, canvas.height, true]]
 
         // entities per level map
         var entitiesForLevel = {
@@ -64,7 +108,7 @@
                     // [500, 200, 20, 2, enemyType.NORMAL],
                     // [200, 300, 20, 2, enemyType.NORMAL],
                     // [300, 200, 20, 2, enemyType.NORMAL],
-                    // [500, 320, 10, 3.05, enemyType.SPEEDY],
+                    [500, 320, 10, 3.05, enemyType.SPEEDY],
                     // [800, 150, 50, 1, enemyType.TANK],
                     // [50, 500, 20, 1, enemyType.FLOATER],
                 ],
@@ -446,19 +490,19 @@
                     this.velY = 3;
                     this.velX = 3;
                     this.speed = 3;
-                    this.lives = 1;
+                    this.lives = 3;
                     this.strength = 5;
                     // while in ghost state, user can pass through walls and cannot lost lives
                     this.inGhostState = false;
                     this.enteredGhostStateTimestamp = null;
                     this.ghostStateDuration = 5000;
                     // money is used to buy things in the shop
-                    this.money = 2000;
+                    this.money = 40;
                     // food is worth this many extra points for the player
                     this.foodPointsIncrementer = 0;
                     // text is displayed inside the entity's visual box
                     this.text = function () {
-                        return [this.strength, this.speed]
+                        return [this.strength, Math.floor(this.speed * 100)]
                     }
 
                     this.update = function (data) {
@@ -574,7 +618,7 @@
                     this.h = this.size;
                     // text is displayed inside the entity's visual box
                     this.text = function () {
-                        return [this.strength, this.speed]
+                        return [this.strength, Math.floor(this.speed * 100)]
                     }
 
                     this.update = function (data) {
@@ -1064,6 +1108,11 @@
         // Game Script
         var Game = {
             init: function () {
+                // close the rules and hide the new game button
+                document.getElementById('rules').style.display = 'none';
+                document.getElementById('newGameButton').style.display = 'none';
+                document.getElementById('gameCanvas').style.display = 'block';
+
                 var cv = document.getElementById('gameCanvas');
                 var ctx = cv.getContext('2d');
 
@@ -1160,6 +1209,10 @@
                     // this is misleading on purpose. this is actually the high score validator
                     value: 'Game Identifier: ' + random(100000, 999999) + '-' + savedScoreValidation + '-' + random(100000, 999999)
                 })
+
+                // Display the new game button again so user can start game over
+                document.getElementById('rules').style.display = 'block';
+                document.getElementById('newGameButton').style.display = 'block';
             },
 
             getLocalHighScoreInfo() {
@@ -1304,7 +1357,7 @@
             }
         }
 
-        Game.init();
+        // Game.init();
     </script>
 
 </body>
