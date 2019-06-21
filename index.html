@@ -752,14 +752,13 @@
                     // check if the level is finished
                     if (data.entities.foodArray.length === 0) {
                         // pause the game (opens the shop) & go to the next level
-                        // the pause is just for UX, doesn't really serve a purpose
-                        data.buildingLevel = true;
+                        // the pause is just for UX, doesn't really serve a purpose other
+                        // than visually when you un-pause it it's on the next level
                         data.gameRunning = false;
                         setTimeout(function () {
                             data.gameLevel++;
-                            data.buildingLevel = false;
                             Entities.initLevelSpecificEntities(data)
-                        }, 500)
+                        }, 1)
                     }
                 }
 
