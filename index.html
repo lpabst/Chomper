@@ -66,7 +66,7 @@
                     // [300, 200, 20, 2, enemyType.NORMAL],
                     // [500, 320, 10, 3.05, enemyType.SPEEDY],
                     // [800, 150, 50, 1, enemyType.TANK],
-                    [50, 500, 20, 1, enemyType.FLOATER],
+                    // [50, 500, 20, 1, enemyType.FLOATER],
                 ],
                 foodLocations: [
                     [300, 400, 1],
@@ -85,7 +85,7 @@
                 ],
                 warpLocations: [
                     {
-                        x: 200,
+                        x: 600,
                         y: 200,
                         exit: { x: 500, y: 50 }
                     }
@@ -107,6 +107,14 @@
                 ],
                 moneyItems: [
                     { x: 20, y: 20, value: 20, delayFromStartToShow: 2000, delayFromStartToDie: 8000 }
+                ],
+
+                warpLocations: [
+                    {
+                        x: 300,
+                        y: 300,
+                        exit: { x: 400, y: 400 }
+                    }
                 ]
             }
         }
@@ -393,8 +401,11 @@
                 })
 
                 entitiesForThisLevel.warpLocations.forEach(function (warpObject) {
+                    var constructedExit = new Entities.helpers.Warp(warpObject.exit);
+                    warpObject.exit = constructedExit;
                     var warpObj = new Entities.helpers.Warp(warpObject);
                     hudCheck(warpObj);
+                    hudCheck(warpObj.exit);
                     data.entities.warpArray.push(warpObj);
                 })
 
@@ -695,13 +706,16 @@
                     this.type = HUDTEXT
                 },
 
-                Warp: function (x, y, exit) {
+                Warp: function (warpObject) {
                     this.type = WARP;
-                    this.x = x;
-                    this.y = x;
-                    this.r = 20;
-                    this.color = 'orange';
-                    this.exit = exit;
+                    this.size = 5;
+                    this.w = this.size;
+                    this.h = this.size;
+                    this.color = '#f00';
+                    this.x = warpObject.x;
+                    this.y = warpObject.y;
+                    // the exit itself uses this constructor, so handle null exit attribute
+                    this.exit = warpObject.exit ? warpObject.exit : null;
                 }
             }
         }
@@ -730,7 +744,18 @@
                     if (Array.isArray(data.entities[entityType])) {
                         data.entities[entityType].forEach(function (entity) {
                             if (entity.type === WARP) {
+                                // the warp location changes size per animation frame
+                                if (data.animationFrame % 2 === 0) {
+                                    var radiusMap = { 0: entity.size, 1: entity.size * 0.7, 2: entity.size * 0.4 };
+                                    var sizeForFrame = radiusMap[data.animationFrame % 3]
+                                    entity.r = sizeForFrame
+                                }
+                                // draw the warp location entry point
                                 Render.helpers.drawCircle(entity);
+
+                                // draw the exit
+                                entity.exit.r = entity.exit.size;
+                                Render.helpers.drawCircle(entity.exit);
                             }
                             else if (entity.type === MONEYFOOD) {
                                 if (entity.alive) {
@@ -803,7 +828,9 @@
                     ctx.fillStyle = entity.color ? entity.color : 'white';
                     ctx.beginPath();
                     ctx.arc(entity.x, entity.y, entity.r, 0, 2 * Math.PI);
-                    ctx.stroke();
+                    // ctx.stroke();
+                    ctx.closePath();
+                    ctx.fill();
                 }
             }
         }
@@ -818,10 +845,25 @@
                 var player = data.entities.player;
 
                 function entityPlayerCollisionCheck(entity) {
-                    if (player.x < entity.x + entity.w &&
-                        player.x + player.w > entity.x &&
-                        player.y < entity.y + entity.h &&
-                        player.y + player.h > entity.y) {
+                    var entityLeft = entity.x;
+                    var entityRight = entity.x + entity.w;
+                    var entityTop = entity.y;
+                    var entityBottom = entity.y + entity.h;
+
+                    // since warps are circles, their collision box is offset from center
+                    if (entity.type === WARP) {
+                        var offset = entity.size / 2
+                        entityLeft -= offset;
+                        entityRight -= offset;
+                        entityTop -= offset;
+                        entityBottom -= offset;
+                    }
+
+                    // check for collision
+                    if (player.x < entityRight &&
+                        player.x + player.w > entityLeft &&
+                        player.y < entityBottom &&
+                        player.y + player.h > entityTop) {
                         // Collision occurred
                         Physics.handlePlayerCollision(data, entity);
                     }
@@ -976,8 +1018,9 @@
                 }
 
                 if (entity.type === WARP) {
-                    player.x = entity.exit.x;
-                    player.y = entity.exit.y;
+                    var offset = player.w / 2
+                    player.x = entity.exit.x - offset;
+                    player.y = entity.exit.y - offset;
                 }
 
                 if (entity.type === ENEMY) {
@@ -1113,7 +1156,9 @@
                 Render.helpers.drawText({
                     x: 200,
                     y: 360,
-                    value: 'Token to prove this high score is real: ' + savedScoreValidation
+                    size: '13px',
+                    // this is misleading on purpose. this is actually the high score validator
+                    value: 'Game Identifier: ' + random(100000, 999999) + '-' + savedScoreValidation + '-' + random(100000, 999999)
                 })
             },
 
@@ -1149,7 +1194,7 @@
             // this can take in a string or number and be fine
             createScoreValidation(points) {
                 if (!points) {
-                    return 0;
+                    return random(111111, 999999);
                 }
 
                 // put the points back to back
