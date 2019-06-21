@@ -1,13 +1,12 @@
-Game Idea, vanilla JS host on heroku
 
 TODO
 
-gameplay
+Gameplay
 Every now and then I'll have a money dollar sign pop up on the screen that you can collect
-The highest levels should be really hard or near impossible to beat.
 Warp locations that only the player can use?
 
-
+Hosting
+vanilla JS host on heroku
 
 
 
@@ -29,6 +28,7 @@ Eating all of the numbers on a level takes you to the next level
 Each level has a different map layout, higher point numbers, and more bad guys
 Completing the highest level can take you back to level 1, but your points/powerups remain
 I don't want a backend or security, so high scores will be kept in the localStorage
+The highest levels should be really hard or near impossible to beat. (resetting to lvl 1 makes the enemies better)
 
 shop
 You can pause the game and visit the store, where you can buy powerups using $$$

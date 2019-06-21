@@ -77,6 +77,10 @@
                     [600, 400, 7],
                     [650, 400, 8],
                     [700, 400, 9],
+                ],
+                moneyItems: [
+                    { x: 50, y: 50, value: 20, delayFromStartToShow: 5000, delayFromStartToDie: 15000 },
+                    { x: 200, y: 200, value: 20, delayFromStartToShow: 1000, delayFromStartToDie: 2000 },
                 ]
             },
             2: {
@@ -314,6 +318,7 @@
                 // remove all enemies and food
                 data.entities.enemiesArray = [];
                 data.entities.foodArray = [];
+                data.entities.moneyArray = [];
                 // remove obstacle walls, keep edge and HUD walls
                 var newWallsArray = [];
                 data.entities.wallsArray.forEach(function (wall) {
@@ -327,7 +332,12 @@
                 this.clearLevelSpecificEntities(data);
 
                 // if the player has completed all of the levels, we'll take them back to level 1
-                if (!entitiesForLevel[data.gameLevel]) data.gameLevel = 1;
+                // but the enemies get tougher each time through
+                if (!entitiesForLevel[data.gameLevel]) {
+                    data.gameLevel = 1;
+                    data.gameLevelResets++
+                }
+
                 // get the entities specific to this level
                 var entitiesForThisLevel = entitiesForLevel[data.gameLevel];
 
@@ -351,15 +361,34 @@
                 // put pieces of food on the board
                 entitiesForThisLevel.foodLocations.forEach(function (food) {
                     var foodObj = new Entities.helpers.Food(food[0], food[1], food[2])
-                    hudCheck(foodObj, false);
+                    hudCheck(foodObj);
                     data.entities.foodArray.push(foodObj)
                 })
+
+                entitiesForThisLevel.moneyItems.forEach(function (obj) {
+                    var moneyFoodObj = new Entities.helpers.MoneyFood(obj);
+                    hudCheck(moneyFoodObj);
+                    data.entities.moneyArray.push(moneyFoodObj);
+                })
+
+                // if we're repeating levels, make the enemies better
+                // this if statement isn't really necessary because of the calculations we're
+                // doing, but it's nice visually to see what's happening here
+                if (data.gameLevelResets > 0) {
+                    data.entities.enemiesArray.forEach(function (enemy) {
+                        enemy.speed += data.gameLevelResets;
+                        enemy.strength += (data.gameLevelResets * 100)
+                    })
+                }
             },
 
             update: function (data) {
                 data.entities.player.update(data);
                 data.entities.enemiesArray.forEach(function (enemy) {
                     enemy.update(data);
+                })
+                data.entities.moneyArray.forEach(function (money) {
+                    money.update(data);
                 })
             },
 
@@ -585,6 +614,28 @@
                     }
                 },
 
+                MoneyFood: function (moneyObj) {
+                    this.x = moneyObj.x;
+                    this.y = moneyObj.y;
+                    this.value = moneyObj.value;
+                    this.delayFromStartToShow = moneyObj.delayFromStartToShow;
+                    this.delayFromStartToDie = moneyObj.delayFromStartToDie;
+                    this.w = 20;
+                    this.h = 20;
+                    this.color = 'green';
+
+                    this.text = function () {
+                        return ['$$$']
+                    }
+
+                    this.update = function (data) {
+                        // show up when it should
+                        // die when it should
+                        // blink sometimes
+                        // blink faster before it dies!
+                    }
+                },
+
                 HUDText: function (y, value) {
                     this.x = 10;
                     this.y = y;
@@ -784,6 +835,7 @@
                         data.gameRunning = false;
                         setTimeout(function () {
                             data.gameLevel++;
+                            data.gameLevelStartTime = new Date().getTime();
                             Entities.initLevelSpecificEntities(data)
                         }, 1)
                     }
@@ -895,7 +947,9 @@
                     canvas: canvas,
                     gameOver: false,
                     gameRunning: true,
-                    gameLevel: 3
+                    gameLevel: 1,
+                    gameLevelStartTime: new Date().getTime(),
+                    gameLevelResets: 0
                 }
 
                 Entities.init(data);
@@ -945,6 +999,13 @@
 
             showGameOver(data) {
                 // show game over and points earned
+                Render.helpers.drawEntity({
+                    x: 150,
+                    y: 240,
+                    w: 600,
+                    h: 150,
+                    color: '#222',
+                })
                 Render.helpers.drawText({
                     x: 200,
                     y: 300,
