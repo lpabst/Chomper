@@ -8,6 +8,7 @@ Hosting
 vanilla JS host on heroku
 
 gameplay
+buginess in the enemies moving through walls and too fast and stuff...
 
 
 DONE
