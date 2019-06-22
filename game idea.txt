@@ -8,7 +8,6 @@ Hosting
 vanilla JS host on heroku
 
 gameplay
-Better bad guy movement logic to not get stuck if you're on the other side of a walls
 
 
 DONE
@@ -25,6 +24,8 @@ Hitting multiple enemies at once should take 1 life only
 There will be a HUD that shows your lives, points, level you're on, etc...
 Bad guys & the user should have a speed and a strength displayed
 	- Whoever has higher strength wins (you vs them)
+Better bad guy movement logic to not get stuck if you're on the other side of a walls
+	- They aren't super smart, but enough of them makes it challenging!
 when player is blinking, bad guys stop moving
 Eating all of the numbers on a level takes you to the next level
 Each level has a different map layout, higher point numbers, and more bad guys
