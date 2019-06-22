@@ -8,10 +8,7 @@ Hosting
 vanilla JS host on heroku
 
 gameplay
-hitting multiple enemies at once should take 1 life only
-bad guys shouldn't phase through walls....
-bad guys are still dumb chasers
-items should cost more as you buy more of them OR bad guys should get stronger each level...?
+Better bad guy movement logic to not get stuck if you're on the other side of a walls
 
 
 DONE
@@ -24,8 +21,8 @@ There are computer generated bots that can kill you
 Every now and then I'll have a money dollar sign pop up on the screen that you can collect
 Different kinds of bad guys do different things, move in different ways?
 	- one could go through walls but move slow, another could be super fast but only go in circles, etc
+Hitting multiple enemies at once should take 1 life only
 There will be a HUD that shows your lives, points, level you're on, etc...
-Better bad guy movement logic to not get stuck if you're on the other side of a walls
 Bad guys & the user should have a speed and a strength displayed
 	- Whoever has higher strength wins (you vs them)
 when player is blinking, bad guys stop moving
@@ -42,3 +39,4 @@ Each item must be purchased using money $$$
 powerups can increase the amount of points you see on the screen
 powerups can grant you temporary or permanent strength to kill bad guys
 powerups can grant you extra lives
+Items should cost more as you buy more of them
