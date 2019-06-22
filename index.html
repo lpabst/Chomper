@@ -29,15 +29,25 @@
             box-shadow: 1px solid black;
         }
 
-        #rulesHeader {
+        #sectionHeader {
             text-decoration: underline;
         }
 
-        #rules {
+        .sectionBox {
             border: 1px solid white;
             padding-left: 10px;
+            padding-bottom: 10px;
             color: #999;
             font-size: 15px;
+        }
+
+        .subItem {
+            margin: 0px;
+            padding-left: 20px;
+        }
+
+        .hasSubItems {
+            margin-bottom: 2px;
         }
 
         #gameCanvas {
@@ -47,37 +57,63 @@
 
     <main>
         <canvas id="gameCanvas"></canvas>
-        <p id="startLevelText">Start Level: <span><input id='gameLevelInput' /></span></p>
-        <button id="newGameButton" onclick="Game.init()">New Game</button>
-        <div id="rules">
-            <h2 id="rulesHeader">How To Play</h2>
-            <p>Use the arrow keys to move around. Try and eat the pieces of food on the board for points</p>
-            <p>Different food colors are worth different amounts of points. Try and earn as many points as you can</p>
-            <p>Enemies are red and will chase you. Each enemy has their strength & speed displayed, as do you</p>
-            <p>If an emeny catches you, whoever has higher strength wins the fight. Ties go to the enemies</p>
-            <p>Losing a fight to an enemy means losing a life. Run out of lives and the game is over</p>
-            <p>After losing a life, your player becomes a ghost for a short time, during which you can move through
-                walls, but cannot use warp points or eat food or money </p>
-            <p>Sometimes bad guys phase through walls. It's not a bug, it's a feature</p>
-            <p>Eating all of the food on a level will take you to the next level</p>
-            <p>Every now and then a green piece of food with '$$' written in it will appear for a short time. Eat it for
-                money</p>
-            <p>Press the *spacebar* to open and close the shop. Finishing a level will also open up the shop</p>
-            <p>Money can be spent in the shop to buy powerups. </p>
-            <p>*Note - you can trade your hard earned points for more money & vice-versa. The house always takes a cut
-            </p>
-            <p>Yours and enemy's movement stops the while shop is open, but the game does not pause, meaning you could
-                miss
-                money appearing while in the shop</p>
-            <p>Blinking red dots are warp points that will transport you to stationary red dots. Only you can use warp
-                points</p>
-            <p>Food Bonus - if your food bonus is 2 and you eat a food worth 4 points, you will earn 6 points</p>
-            <p>See how many points you can end the game with! Have fun</p>
+        <div id="hideDuringGameplay">
+            <p id="startLevelText">Start Level: <span><input id='gameLevelInput' /></span></p>
+            <button id="newGameButton" onclick="Game.init()">Play Campaign</button>
+            <button id='playCustomGameButton' onclick="Game.initCustom()">Play Custom Map</button>
+            <button id='returnToEditorButton' onclick="drawEverything()">Return To Editor</button>
+            <div id="rules" class="sectionBox">
+                <h2 id="sectionHeader">How To Play</h2>
+                <p>Use the arrow keys to move around. Try and eat the pieces of food on the board for points</p>
+                <p>Different food colors are worth different amounts of points. Try and earn as many points as you can
+                </p>
+                <p>Enemies are red and will chase you. Each enemy has their strength & speed displayed, as do you</p>
+                <p>If an emeny catches you, whoever has higher strength wins the fight. Ties go to the enemies</p>
+                <p>Losing a fight to an enemy means losing a life. Run out of lives and the game is over</p>
+                <p>After losing a life, your player becomes a ghost for a short time, during which you can move through
+                    walls, but cannot use warp points or eat food or money </p>
+                <p>Sometimes bad guys phase through walls. It's not a bug, it's a feature</p>
+                <p>Eating all of the food on a level will take you to the next level</p>
+                <p>Every now and then a green piece of food with '$$' written in it will appear for a short time. Eat it
+                    for
+                    money</p>
+                <p>Press the *spacebar* to open and close the shop. Finishing a level will also open up the shop</p>
+                <p>Money can be spent in the shop to buy powerups. </p>
+                <p>*Note - you can trade your hard earned points for more money & vice-versa. The house always takes a
+                    cut
+                </p>
+                <p>Yours and enemy's movement stops the while shop is open, but the game does not pause, meaning you
+                    could
+                    miss
+                    money appearing while in the shop</p>
+                <p>Blinking red dots are warp points that will transport you to stationary red dots. Only you can use
+                    warp
+                    points</p>
+                <p>Food Bonus - if your food bonus is 2 and you eat a food worth 4 points, you will earn 6 points</p>
+                <p>See how many points you can end the game with! Have fun</p>
+            </div>
+            <div id="editorHowTo" class="sectionBox">
+                <h2 id="sectionHeader">How To Use The Editor</h2>
+                <p>clicking on the map will place whatever the active item is onto the map at that location</p>
+                <p>Press 'P' to make the active item the player object</p>
+                <p>Press 'E' to make the active item an enemy object</p>
+                <p>Press 'M' to make the active item a money object</p>
+                <p class="hasSubItems">Press 'O' to make the active item a wall/obstacle object.</p>
+                <p class="subItem">Note: you must click twice to build a wall between the points you clicked on</p>
+                <p class="subItem">Also Note: All walls are straight up/down or left/right, no diagonal walls can be
+                    built</p>
+                <p class="hasSubItems">Press 'F' to make the active item a food Object.</p>
+                <p class="subItem">Note: While the active item is food, you can click the numbers to build different
+                    point valued food items</p>
+                <p class="hasSubItems">Press 'W' to make the active item a warp object</p>
+                <p class="subItem">Note: You must click twice to place a warp item. The first click places the entry
+                    point, the 2nd click places the exit point</p>
+            </div>
         </div>
     </main>
-
     <script src="https://code.jquery.com/jquery-3.4.1.min.js"
-        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous"></script>
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous">
+        </script>
     <script>
         // set the w/h of the canvas
         var canvas = document.getElementById('gameCanvas')
@@ -197,7 +233,7 @@
             },
 
             // stops player movement
-            allMovementKeysUp: function(data){
+            allMovementKeysUp: function (data) {
                 delete Input.helpers.down['37'];
                 delete Input.helpers.pressed['37'];
                 delete Input.helpers.down['38'];
@@ -614,23 +650,15 @@
                             return false;
                         }
 
-                        function debugLog(args, enemyType) {
-                            if (data.gameLevel === 2 && enemyType === 'NORMAL' && data.animationFrame % 10 === 0) {
-                                console.log(args)
-                            }
-                        }
-
                         // pixel allowance for this enemy is based on their speed. Faster ones have a higher 
                         // chance of jumping a wall, so the pixel allowance is lower
                         var pixelAllowance = 5 - this.speed;
                         if (pixelAllowance < 1) pixelAllowance = 1;
-                        debugLog(this.speed, this.enemyType);
 
                         if (player.x <= this.x) {
                             var newLeftLine = this.x - this.speed;
                             var canMoveLeft = isFloater ||
                                 !areaContainsWall(newLeftLine, newLeftLine, this.y, this.y + this.h, pixelAllowance)
-                            debugLog('can move left: ' + canMoveLeft, this.enemyType)
                             if (canMoveLeft) {
                                 this.x -= this.speed;
                             }
@@ -639,7 +667,6 @@
                             var newRightLine = this.x + this.w + this.speed;
                             var canMoveRight = isFloater ||
                                 !areaContainsWall(newRightLine, newRightLine, this.y, this.y + this.h, pixelAllowance)
-                            debugLog('can move right: ' + canMoveRight, this.enemyType)
                             if (canMoveRight) {
                                 this.x += this.speed;
                             }
@@ -648,7 +675,6 @@
                             var newTopLine = this.y - this.speed;
                             var canMoveUp = isFloater ||
                                 !areaContainsWall(this.x, this.x + this.w, newTopLine, newTopLine, pixelAllowance)
-                            debugLog('can move up: ' + canMoveUp, this.enemyType)
                             if (canMoveUp) {
                                 this.y -= this.speed;
                             }
@@ -657,7 +683,6 @@
                             var newBottomLine = this.y + this.h + this.speed;
                             var canMoveDown = isFloater ||
                                 !areaContainsWall(this.x, this.x + this.w, newBottomLine, newBottomLine, pixelAllowance)
-                            debugLog('can move down: ' + canMoveDown, this.enemyType)
                             if (canMoveDown) {
                                 this.y += this.speed
                             }
@@ -1070,10 +1095,7 @@
                 if (!settings) settings = {};
 
                 // close the rules and hide the new game button
-                document.getElementById('rules').style.display = 'none';
-                document.getElementById('newGameButton').style.display = 'none';
-                document.getElementById('startLevelText').style.display = 'none';
-                document.getElementById('gameCanvas').style.display = 'block';
+                document.getElementById('hideDuringGameplay').style.display = 'none';
 
                 // see what level the user wants to start on
                 var gameLevelInput = document.getElementById('gameLevelInput')
@@ -1137,9 +1159,12 @@
             },
 
             run: function (data) {
+                window.gameLoopRunning = true;
+
                 var loop = function () {
                     // end the loop if game is over
                     if (data.gameOver) {
+                        window.gameLoopRunning = false;
                         Game.handleGameOver(data);
                         return;
                     }
@@ -1261,8 +1286,22 @@
             },
 
             handleGameOver(data) {
+                // Display the new game button again so user can start game over
+                document.getElementById('hideDuringGameplay').style.display = 'block';
+
+                // unhook the event listeners
+                $(window).off('keydown', data.eventListeners.handleKeyDown)
+                $(window).off('keyup', data.eventListeners.handleKeyUp)
+                $(window).off('keypress', data.eventListeners.handleKeyPress)
+
+                // all movement keys up
+                Input.allMovementKeysUp();
+
                 // if we're playing a custom map, return to the editor
-                return drawEverything();
+                if (data.playCustomMap) {
+                    window.wall = true;
+                    return drawEverything();
+                }
 
                 // otherwise show the final score
                 var gameOverBox = {
@@ -1314,11 +1353,6 @@
                 Render.helpers.drawText(fakeGameIdText)
                 Render.helpers.drawText(scoreValidatorText)
                 Render.helpers.drawText(highScoreText)
-
-                // Display the new game button again so user can start game over
-                document.getElementById('rules').style.display = 'block';
-                document.getElementById('newGameButton').style.display = 'block';
-                document.getElementById('startLevelText').style.display = 'block';
             },
 
             getLocalHighScoreInfo() {
@@ -1489,6 +1523,9 @@
         var warpLocations = [];
 
         function drawEverything() {
+            // if a game is in progress, do nothing
+            if (window.gameLoopRumning) return;
+
             // clear board then draw everything
             Render.clearCanvas();
 
@@ -1578,11 +1615,15 @@
         }
 
         $(window).on('keypress', function (event) {
+            // if a game is in progress, do nothing
+            if (window.gameLoopRunning) return;
+
             // hit "T" 3 times in a row to start test map
             if (event.code === 'KeyT') {
                 if (!window.timesTPressed) window.timesTPressed = 0;
                 window.timesTPressed++;
                 if (window.timesTPressed >= 3) {
+                    window.timesTPressed = 0;
                     Game.init({ testMode: true })
                 }
             } else {
