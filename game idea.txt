@@ -8,7 +8,6 @@ Hosting
 vanilla JS host on heroku
 
 gameplay
-custom map should work
 
 
 DONE
@@ -31,6 +30,7 @@ Completing the highest level can take you back to level 1, but your points/power
 I don't want a backend or security, so high scores will be kept in the localStorage
 The highest levels should be really hard or near impossible to beat. (resetting to lvl 1 makes the enemies better)
 Warp locations that only the player can use
+custom map should be playable
 
 shop
 You can pause the game and visit the store, where you can buy powerups using $$$
