@@ -1,0 +1,1763 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <title>Chomper</title>
+    <!-- 
+        If we release web view in the app, I can very easily make
+        a mobile friendly 1-level version!
+    -->
+</head>
+
+<body>
+    <style>
+        body {
+            background: #222;
+        }
+
+        #startLevelText {
+            color: #999;
+        }
+
+        #newGameButton {
+            width: 200px;
+            height: 50px;
+            margin-bottom: 10px;
+            box-shadow: 1px solid black;
+        }
+
+        #sectionHeader {
+            text-decoration: underline;
+        }
+
+        .sectionBox {
+            border: 1px solid white;
+            padding-left: 10px;
+            padding-bottom: 10px;
+            color: #999;
+            font-size: 15px;
+        }
+
+        .subItem {
+            margin: 0px;
+            padding-left: 20px;
+        }
+
+        .hasSubItems {
+            margin-bottom: 2px;
+        }
+
+        #gameCanvas {
+            background: black;
+        }
+    </style>
+
+    <main>
+        <canvas id="gameCanvas"></canvas>
+        <div id="hideDuringGameplay">
+            <p id="startLevelText">Start Level: <span><input id='gameLevelInput' /></span></p>
+            <button id="newGameButton" onclick="Game.init()">Play Campaign</button>
+            <button id='playCustomGameButton' onclick="Game.initCustom()">Play Custom Map</button>
+            <button id='returnToEditorButton' onclick="drawEverything()">Return To Editor</button>
+            <div id="rules" class="sectionBox">
+                <h2 id="sectionHeader">How To Play</h2>
+                <p>Clicking the 'Play Campaign' button will start the games built in levels. Read down below for info
+                    about building your own levels</p>
+                <p>Put any level number in the 'Start Level' input to begin playing on that level</p>
+                <p>Use the arrow keys to move around. Try and eat the pieces of food on the board for points</p>
+                <p>Different food colors are worth different amounts of points. Try and earn as many points as you can
+                </p>
+                <p>Enemies are red and will chase you. Each enemy has their strength & speed displayed, as do you</p>
+                <p>If an emeny catches you, whoever has higher strength wins the fight. Ties go to the enemies</p>
+                <p>Losing a fight to an enemy means losing a life. Run out of lives and the game is over</p>
+                <p>After losing a life, your player becomes a ghost for a short time, during which you can move through
+                    walls, but cannot use warp points or eat food or money </p>
+                <p>Sometimes bad guys phase through walls. It's not a bug, it's a feature</p>
+                <p>Eating all of the food on a level will take you to the next level</p>
+                <p>Every now and then a green piece of food with '$$' written in it will appear for a short time. Eat it
+                    for
+                    money</p>
+                <p>Press the *spacebar* to open and close the shop. Finishing a level will also open up the shop</p>
+                <p>Money can be spent in the shop to buy powerups. </p>
+                <p>*Note - you can trade your hard earned points for more money & vice-versa. The house always takes a
+                    cut
+                </p>
+                <p>Yours and enemy's movement stops the while shop is open, but the game does not pause, meaning you
+                    could
+                    miss
+                    money appearing while in the shop</p>
+                <p>Blinking red dots are warp points that will transport you to stationary red dots. Only you can use
+                    warp
+                    points</p>
+                <p>Food Bonus - if your food bonus is 2 and you eat a food worth 4 points, you will earn 6 points</p>
+                <p>See how many points you can end the game with! Have fun</p>
+            </div>
+            <div id="editorHowTo" class="sectionBox">
+                <h2 id="sectionHeader">How To Use The Editor</h2>
+                <p>clicking on the map will place whatever the active item is onto the map at that location</p>
+                <p>Press 'P' to make the active item the player object</p>
+                <p>Press 'E' to make the active item an enemy object</p>
+                <p>Press 'M' to make the active item a money object</p>
+                <p class="hasSubItems">Press 'O' to make the active item a wall/obstacle object.</p>
+                <p class="subItem">Note: you must click twice to build a wall, then it will build the wall between the
+                    points you clicked on</p>
+                <p class="subItem">Also Note: All walls are straight up/down or left/right, no diagonal walls can be
+                    built</p>
+                <p class="hasSubItems">Press 'F' to make the active item a food object.</p>
+                <p class="subItem">Note: While the active item is food, you can click the numbers to build different
+                    point valued food items</p>
+                <p class="hasSubItems">Press 'W' to make the active item a warp object</p>
+                <p class="subItem">Note: You must click twice to place a warp item. The first click places the entry
+                    point, the 2nd click places the exit point</p>
+                <p>Click on the 'Play Custom Map' button to try out your level you built!</p>
+            </div>
+        </div>
+    </main>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+        integrity="sha256-CSXorXvZcTkaix6Yvo6HppcZGetbYMGWSFlBw8HfCJo=" crossorigin="anonymous">
+        </script>
+    <script>
+        // set the w/h of the canvas
+        var canvas = document.getElementById('gameCanvas')
+        canvas.width = 500;
+        canvas.height = 500;
+
+        // types
+        var WALL = 'WALL';
+        var OBSTACLE = 'OBSTACLE';
+        var PLAYER = 'PLAYER';
+        var ENEMY = 'ENEMY';
+        var FOOD = 'FOOD';
+        var MONEYFOOD = 'MONEYFOOD';
+        var HUDTEXT = 'HUDTEXT';
+        var WARP = 'WARP';
+        var LIVES = 'LIVES';
+        var enemyType = {
+            NORMAL: 'NORMAL', // default
+            TANK: 'TANK', // slow and increased strength
+            SPEEDY: 'SPEEDY', // fast and decreased strength
+            FLOATER: 'FLOATER' // slow and can go through walls
+        }
+
+        // HUD area 0 - 140 && 0 - 88
+        var hudWalls = [[0, 90, 150, 8, true], [150, 0, 8, 98, true]];
+        var edgeWalls = [
+            [0, 0, canvas.width, 8, true], // top
+            [0, 0, 8, canvas.height, true], // left
+            [0, canvas.height - 8, canvas.width, 8, true],
+            [canvas.width - 8, 0, 8, canvas.height, true]]
+
+        // entities per level map
+        var entitiesForLevel = {
+            1: {
+                playerStartLocation: { x: 300, y: 400 },
+                obstacles: [[33, 409, 8, 49], [34, 456, 48, 8], [5, 367, 111, 8], [39, 408, 43, 8], [79, 410, 8, 47], [115, 413, 8, 78], [48, 329, 63, 8], [48, 256, 8, 73], [51, 252, 53, 8], [47, 217, 54, 8], [44, 128, 8, 85], [44, 127, 54, 8], [47, 211, 8, 10], [141, 130, 8, 239], [103, 256, 8, 76], [95, 127, 8, 91], [150, 414, 8, 75], [156, 414, 145, 8], [187, 448, 155, 8], [337, 355, 8, 91], [377, 354, 8, 96], [381, 445, 69, 8], [417, 409, 28, 8], [445, 278, 8, 133], [411, 278, 37, 8], [411, 298, 8, 111], [415, 281, 8, 22], [300, 318, 82, 8], [300, 319, 8, 62], [244, 371, 54, 8], [140, 368, 64, 8], [183, 329, 85, 8], [182, 233, 8, 94], [183, 231, 82, 8], [214, 293, 28, 8], [214, 268, 8, 27], [214, 267, 24, 8], [235, 267, 8, 27], [265, 270, 8, 24], [269, 290, 109, 8], [412, 246, 36, 8], [446, 99, 8, 148], [412, 99, 34, 8], [410, 99, 8, 145], [371, 102, 8, 188], [370, 53, 124, 8], [264, 228, 41, 8], [305, 228, 8, 32], [312, 257, 25, 8], [187, 189, 182, 8], [186, 49, 8, 140], [186, 47, 146, 8], [332, 49, 8, 139]],
+                enemyLocations: [[275, 308, 20, 2, "NORMAL"], [430, 12, 20, 2, "NORMAL"]],
+                foodLocations: [[15, 387, 1], [15, 414, 1], [15, 440, 1], [16, 468, 1], [39, 470, 2], [67, 470, 2], [95, 470, 1], [95, 443, 1], [95, 414, 1], [95, 387, 1], [43, 386, 1], [71, 386, 1], [131, 469, 1], [133, 444, 1], [132, 419, 1], [96, 348, 1], [70, 347, 1], [46, 344, 1], [23, 344, 1], [21, 315, 1], [21, 286, 1], [21, 257, 1], [20, 207, 1], [20, 183, 1], [21, 154, 1], [21, 127, 1], [22, 105, 2], [46, 107, 1], [70, 106, 1], [94, 106, 1], [122, 323, 1], [125, 301, 1], [125, 278, 1], [123, 259, 1], [121, 207, 1], [118, 187, 1], [117, 160, 1], [118, 132, 1], [118, 106, 1], [59, 232, 1], [82, 232, 1], [188, 346, 1], [160, 344, 1], [159, 310, 1], [158, 276, 1], [158, 239, 1], [158, 207, 1], [159, 169, 1], [159, 139, 1], [159, 108, 1], [165, 77, 2], [167, 47, 2], [167, 21, 2], [190, 21, 3], [214, 22, 2], [239, 20, 2], [264, 21, 2], [290, 21, 1], [321, 21, 1], [375, 24, 1], [403, 23, 1], [436, 23, 1], [471, 20, 1], [352, 166, 1], [353, 130, 1], [353, 102, 1], [353, 72, 1], [353, 44, 1], [351, 26, 1], [427, 76, 1], [425, 259, 1], [426, 424, 1], [469, 423, 1], [468, 390, 1], [468, 360, 1], [467, 332, 1], [466, 299, 1], [465, 274, 1], [465, 249, 1], [464, 223, 1], [464, 195, 1], [465, 170, 1], [463, 145, 1], [465, 123, 1], [465, 103, 1], [465, 78, 1], [392, 78, 1], [392, 108, 1], [390, 139, 1], [390, 171, 1], [390, 207, 1], [390, 237, 1], [390, 282, 1], [392, 316, 1], [391, 360, 1], [393, 390, 1], [394, 420, 1], [472, 450, 1], [467, 472, 1], [436, 471, 1], [405, 471, 1], [381, 471, 1], [326, 470, 1], [295, 470, 1], [260, 470, 1], [226, 470, 1], [195, 471, 1], [171, 471, 1], [168, 447, 1], [169, 428, 1], [198, 427, 1], [227, 428, 1], [260, 429, 1], [294, 431, 1], [319, 431, 1], [319, 374, 1], [320, 348, 1], [360, 338, 1], [358, 370, 1], [358, 396, 2], [357, 426, 2], [357, 451, 2], [357, 472, 2], [133, 388, 1], [166, 388, 1], [199, 388, 1], [244, 389, 1], [281, 390, 1], [248, 345, 1], [276, 345, 1], [197, 307, 2], [197, 282, 2], [195, 257, 2], [224, 249, 2], [228, 313, 2], [250, 308, 2], [248, 275, 2], [250, 253, 2], [280, 253, 2], [279, 271, 1], [303, 272, 1], [348, 272, 1], [323, 272, 1], [350, 246, 1], [349, 222, 1], [323, 239, 1], [324, 223, 1], [293, 206, 1], [253, 205, 1], [216, 205, 1], [189, 208, 1], [225, 355, 1], [224, 391, 1]],
+                moneyItems: [{ "x": 220, "y": 82, "value": 20, "delayFromStartToShow": 5000, "delayFromStartToDie": 35000 }, { "x": 130, "y": 392, "value": 20, "delayFromStartToShow": 15000, "delayFromStartToDie": 45000 }, { "x": 282, "y": 82, "value": 20, "delayFromStartToShow": 25000, "delayFromStartToDie": 55000 }, { "x": 400, "y": 421, "value": 20, "delayFromStartToShow": 35000, "delayFromStartToDie": 65000 }, { "x": 224, "y": 147, "value": 20, "delayFromStartToShow": 45000, "delayFromStartToDie": 75000 }, { "x": 118, "y": 234, "value": 20, "delayFromStartToShow": 55000, "delayFromStartToDie": 85000 }],
+                warpLocations: [{ "x": 357, "y": 473, "exit": { "x": 307, "y": 166 } }, { "x": 199, "y": 61, "exit": { "x": 19, "y": 344 } }],
+                testMode: {
+                    foodLocations: [[150, 387, 1]]
+                }
+            },
+            2: {
+                playerStartLocation: { x: 64, y: 98 },
+                obstacles: [[7, 147, 199, 8], [204, 11, 8, 136], [206, 152, 8, 126], [206, 277, 109, 8], [315, 277, 8, 78], [318, 355, 99, 8], [417, 361, 8, 84], [417, 445, 54, 8], [471, 451, 8, 30], [471, 480, 8, 10], [7, 185, 157, 8], [165, 228, 8, 229], [38, 226, 128, 8], [38, 269, 92, 8], [38, 275, 8, 104], [7, 409, 91, 8], [110, 277, 8, 99], [44, 370, 67, 8], [41, 451, 124, 8], [208, 325, 48, 8], [208, 332, 8, 47], [208, 368, 46, 8], [244, 331, 8, 36], [250, 348, 31, 8], [273, 385, 8, 47], [309, 407, 47, 8], [333, 432, 8, 31], [210, 407, 34, 8], [228, 420, 8, 47], [273, 459, 22, 8], [385, 429, 8, 32], [452, 405, 40, 8], [422, 373, 8, 32], [424, 359, 39, 8], [406, 320, 54, 8], [406, 250, 8, 68], [411, 249, 44, 8], [451, 247, 8, 74], [372, 250, 8, 73], [348, 312, 25, 8], [346, 248, 27, 8], [348, 249, 8, 64], [248, 238, 68, 8], [211, 202, 62, 8], [303, 40, 8, 198], [242, 171, 61, 8], [211, 131, 56, 8], [245, 86, 56, 8], [211, 48, 47, 8], [445, 207, 8, 8], [350, 205, 94, 8], [367, 82, 8, 87], [426, 77, 8, 85], [346, 33, 109, 8]],
+                enemyLocations: [[384, 88, 20, 2, "NORMAL"], [287, 425, 20, 0.5, enemyType.FLOATER]],
+                foodLocations: [[21, 160, 2], [42, 156, 2], [71, 159, 2], [101, 160, 2], [129, 160, 2], [160, 160, 2], [183, 160, 2], [17, 201, 3], [36, 199, 3], [57, 199, 3], [85, 201, 3], [106, 200, 3], [131, 200, 3], [154, 200, 3], [182, 199, 3], [15, 245, 4], [142, 244, 4], [37, 241, 1], [63, 241, 1], [91, 241, 1], [116, 241, 1], [13, 276, 2], [15, 304, 2], [13, 330, 2], [13, 355, 2], [12, 382, 2], [41, 384, 2], [67, 384, 2], [99, 384, 2], [127, 383, 2], [136, 353, 2], [136, 326, 2], [135, 296, 2], [139, 267, 2], [143, 409, 3], [112, 410, 3], [124, 423, 4], [82, 421, 2], [51, 422, 2], [19, 420, 2], [17, 447, 2], [16, 474, 2], [53, 471, 2], [86, 471, 2], [116, 470, 2], [150, 469, 2], [185, 469, 2], [183, 428, 2], [180, 373, 2], [178, 326, 2], [177, 277, 2], [179, 235, 2], [220, 294, 2], [244, 292, 2], [268, 293, 2], [292, 292, 2], [265, 319, 2], [292, 320, 2], [257, 362, 4], [314, 417, 4], [217, 385, 2], [207, 432, 2], [244, 429, 2], [251, 383, 2], [290, 357, 2], [289, 387, 2], [289, 418, 2], [355, 439, 2], [305, 450, 2], [241, 465, 2], [349, 465, 2], [397, 466, 2], [397, 421, 2], [393, 378, 2], [363, 399, 2], [360, 373, 2], [326, 379, 2], [423, 460, 5], [455, 416, 5], [431, 414, 2], [435, 380, 2], [460, 379, 2], [471, 336, 2], [435, 333, 2], [389, 330, 2], [346, 330, 2], [325, 296, 2], [323, 258, 2], [279, 253, 2], [240, 252, 2], [221, 222, 2], [261, 215, 2], [283, 190, 2], [246, 180, 2], [219, 178, 2], [218, 139, 2], [242, 153, 2], [240, 140, 2], [252, 154, 2], [252, 139, 2], [262, 152, 2], [264, 135, 2], [274, 152, 2], [276, 135, 2], [285, 109, 2], [250, 101, 2], [220, 101, 2], [218, 64, 2], [250, 61, 2], [278, 60, 2], [276, 25, 2], [219, 17, 4], [244, 20, 3], [317, 16, 2], [358, 11, 1], [389, 6, 1], [412, 12, 1], [446, 11, 1], [469, 12, 1], [321, 48, 2], [321, 81, 2], [321, 107, 2], [315, 146, 2], [319, 175, 2], [319, 208, 2], [352, 221, 2], [386, 222, 2], [426, 217, 2], [462, 219, 2], [467, 257, 2], [470, 294, 2], [358, 179, 2], [388, 179, 2], [428, 174, 2], [459, 174, 2], [392, 142, 3], [389, 112, 3], [392, 82, 3], [455, 139, 2], [453, 96, 2], [456, 54, 2], [362, 48, 4], [415, 46, 4]],
+                moneyItems: [{ "x": 135, "y": 312, "value": 20, "delayFromStartToShow": 5000, "delayFromStartToDie": 35000 }, { "x": 285, "y": 311, "value": 20, "delayFromStartToShow": 15000, "delayFromStartToDie": 45000 }, { "x": 392, "y": 226, "value": 20, "delayFromStartToShow": 25000, "delayFromStartToDie": 55000 }, { "x": 272, "y": 102, "value": 20, "delayFromStartToShow": 35000, "delayFromStartToDie": 65000 }, { "x": 26, "y": 427, "value": 20, "delayFromStartToShow": 45000, "delayFromStartToDie": 75000 }, { "x": 360, "y": 466, "value": 20, "delayFromStartToShow": 55000, "delayFromStartToDie": 85000 }, { "x": 189, "y": 128, "value": 20, "delayFromStartToShow": 65000, "delayFromStartToDie": 95000 }],
+                warpLocations: [{ "x": 14, "y": 159, "exit": { "x": 18, "y": 109 } }, { "x": 170, "y": 137, "exit": { "x": 449, "y": 470 } }, { "x": 196, "y": 109, "exit": { "x": 480, "y": 425 } }, { "x": 396, "y": 60, "exit": { "x": 163, "y": 13 } }],
+                testMode: {
+                    enemyLocations: [[384, 88, 20, 2, "NORMAL"]],
+                    foodLocations: [[21, 160, 2]],
+                }
+            },
+            3: {
+                playerStartLocation: { x: 225, y: 197 },
+                obstacles: [[136, 228, 215, 8], [138, 279, 211, 8], [81, 149, 8, 215], [7, 244, 39, 8], [42, 100, 8, 100], [42, 298, 8, 135], [49, 427, 308, 8], [170, 323, 8, 57], [213, 323, 8, 52], [257, 320, 8, 55], [310, 322, 8, 56], [126, 322, 8, 49], [136, 180, 210, 8], [155, 35, 125, 8], [331, 8, 8, 74], [197, 80, 134, 8], [141, 134, 196, 8], [349, 323, 8, 50], [371, 34, 8, 68], [374, 34, 81, 8], [452, 40, 8, 58], [374, 94, 78, 8], [391, 140, 8, 226], [395, 140, 59, 8], [442, 140, 8, 225], [395, 355, 47, 8], [390, 408, 8, 52], [391, 456, 65, 8], [451, 406, 8, 50], [391, 406, 60, 8], [125, 369, 8, 13], [81, 363, 8, 16]],
+                enemyLocations: [[95, 194, 8, 3.5, enemyType.SPEEDY], [358, 194, 8, 3.5, enemyType.SPEEDY], [226, 391, 95, 1.3, enemyType.TANK], [224, 46, 100, 1.2, enemyType.TANK], [409, 108, 115, 1.1, enemyType.TANK], [407, 368, 150, 1, enemyType.TANK], [14, 209, 85, 1.4, enemyType.TANK], [11, 264, 50, 1, enemyType.FLOATER], [92, 454, 100, 1.2, enemyType.TANK], [332, 455, 100, 1.2, enemyType.TANK]],
+                foodLocations: [[139, 200, 3], [166, 196, 3], [198, 196, 3], [267, 198, 3], [305, 197, 3], [337, 195, 3], [138, 251, 4], [168, 249, 4], [197, 249, 4], [230, 251, 4], [264, 249, 4], [297, 249, 4], [335, 249, 4], [136, 155, 4], [162, 156, 4], [192, 155, 4], [216, 153, 4], [247, 151, 4], [282, 151, 4], [321, 153, 4], [144, 343, 5], [187, 342, 5], [233, 341, 5], [281, 340, 5], [330, 341, 5], [14, 117, 6], [184, 11, 6], [17, 269, 3], [16, 300, 3], [12, 341, 3], [16, 380, 3], [16, 420, 3], [17, 454, 3], [54, 454, 3], [103, 457, 3], [142, 454, 3], [192, 453, 3], [228, 456, 3], [284, 449, 3], [334, 452, 3], [366, 454, 3], [365, 454, 3], [390, 459, 3], [411, 472, 3], [446, 472, 3], [472, 471, 3], [471, 430, 3], [468, 378, 3], [431, 374, 3], [388, 375, 3], [367, 414, 3], [367, 374, 3], [323, 399, 3], [274, 399, 3], [210, 399, 3], [140, 393, 3], [98, 395, 3], [58, 397, 3], [56, 356, 3], [56, 318, 3], [55, 278, 3], [55, 247, 3], [57, 211, 3], [20, 211, 3], [17, 179, 3], [58, 177, 3], [17, 145, 3], [62, 138, 3], [62, 111, 3], [368, 335, 3], [364, 291, 3], [365, 254, 3], [365, 200, 3], [363, 161, 3], [363, 118, 3], [391, 119, 3], [425, 118, 3], [465, 116, 3], [470, 174, 3], [470, 233, 3], [469, 279, 3], [469, 333, 3], [470, 77, 3], [467, 35, 3], [427, 16, 3], [375, 14, 3], [346, 19, 3], [347, 59, 3], [332, 103, 3], [287, 101, 3], [232, 100, 3], [181, 98, 3], [175, 57, 3], [221, 57, 3], [274, 57, 3], [308, 52, 3], [304, 14, 3], [270, 14, 3], [224, 11, 3], [104, 110, 3], [110, 155, 3], [99, 213, 3], [106, 249, 3], [105, 281, 3], [102, 324, 3], [174, 393, 3]],
+                moneyItems: [{ "x": 110, "y": 151, "value": 20, "delayFromStartToShow": 5000, "delayFromStartToDie": 35000 }, { "x": 475, "y": 57, "value": 20, "delayFromStartToShow": 15000, "delayFromStartToDie": 45000 }, { "x": 292, "y": 50, "value": 20, "delayFromStartToShow": 25000, "delayFromStartToDie": 55000 }, { "x": 58, "y": 240, "value": 20, "delayFromStartToShow": 35000, "delayFromStartToDie": 65000 }, { "x": 60, "y": 404, "value": 20, "delayFromStartToShow": 45000, "delayFromStartToDie": 75000 }, { "x": 294, "y": 456, "value": 20, "delayFromStartToShow": 55000, "delayFromStartToDie": 85000 }, { "x": 468, "y": 375, "value": 20, "delayFromStartToShow": 65000, "delayFromStartToDie": 95000 }, { "x": 325, "y": 202, "value": 20, "delayFromStartToShow": 75000, "delayFromStartToDie": 105000 }],
+                warpLocations: [{ "x": 21, "y": 105, "exit": { "x": 221, "y": 18 } }, { "x": 163, "y": 14, "exit": { "x": 21, "y": 146 } }],
+                testMode: {
+                    enemyLocations: [[226, 391, 95, 1.3, enemyType.TANK]],
+                    foodLocations: [[139, 200, 3]],
+                }
+            }
+        }
+
+        // random number generator
+        function random(low, high, includeHigh) {
+            var inclusiveIncrementer = includeHigh ? 1 : 0
+            return Math.floor(Math.random() * (high - low + inclusiveIncrementer)) + low;
+        }
+
+        // checks if an entity is in the HUD area
+        function hudCheck(entity, ignoreHudAreaWarning) {
+            var rightSideOfHUD = hudWalls[1][0];
+            var bottomOfHUD = hudWalls[1][3]
+            if (!ignoreHudAreaWarning && entity.x < rightSideOfHUD && entity.y < bottomOfHUD) {
+                console.warn('In the HUD area');
+                console.log(entity);
+            }
+        }
+
+        function removeFromArrayById(arr, id) {
+            for (var i = arr.length - 1; i >= 0; i--) {
+                if (arr[i].id === id) {
+                    arr.splice(i, 1);
+                    return;
+                }
+            }
+        }
+
+        // Player input
+        var Input = {
+            init: function (data) {
+                this.setMovementKeys(data);
+                this.setMenuKeys(data);
+            },
+
+            setMovementKeys: function (data) {
+                data.eventListeners.handleKeyDown = function () {
+                    // keeps arrow keys from scrolling the page
+                    if (event.keyCode >= 37 && event.keyCode <= 40) {
+                        event.preventDefault();
+                    }
+                    Input.helpers.down[event.keyCode] = true;
+                }
+                data.eventListeners.handleKeyUp = function () {
+                    delete Input.helpers.down[event.keyCode];
+                    delete Input.helpers.pressed[event.keyCode];
+                }
+                $(window).on('keydown', data.eventListeners.handleKeyDown);
+                $(window).on('keyup', data.eventListeners.handleKeyUp)
+            },
+
+            // stops player movement
+            allMovementKeysUp: function (data) {
+                delete Input.helpers.down['37'];
+                delete Input.helpers.pressed['37'];
+                delete Input.helpers.down['38'];
+                delete Input.helpers.pressed['38'];
+                delete Input.helpers.down['39'];
+                delete Input.helpers.pressed['39'];
+                delete Input.helpers.down['40'];
+                delete Input.helpers.pressed['40'];
+            },
+
+            setMenuKeys: function (data) {
+                data.eventListeners.handleKeyPress = function () {
+                    // space bar pauses game which opens menu
+                    if (event.keyCode === 32) {
+                        event.preventDefault();
+                        Input.allMovementKeysUp(data);
+                        data.gameRunning = !data.gameRunning;
+                    }
+                    // while menu is open, hotkeys trigger menu transactions
+                    if (!data.gameRunning) {
+                        Input.handleShopPurchases(data, event);
+                    }
+                }
+                $(window).on('keypress', data.eventListeners.handleKeyPress);
+            },
+
+            handleShopPurchases(data, event) {
+                // if the game is over, do nothing
+                if (data.gameOver) return;
+
+                // otherwise buy stuff
+                var shopItem = data.shopItems[event.code];
+                if (!shopItem) return;
+
+                var player = data.entities.player;
+                // costType could be money or points
+                var playersBalanceOfCostType = player[shopItem.costType]
+                // see if player can purchase
+                if (playersBalanceOfCostType < shopItem.cost) {
+                    return alert('You dont have enough ' + shopItem.costType + ' for that item. \nCost: ' + shopItem.cost + ' \nYou have ' + playersBalanceOfCostType)
+                }
+
+                // copy the item so we can change it without changing the store's items
+                var changesToPlayer = JSON.parse(JSON.stringify(shopItem));
+
+                // the cost type is either points/money so we change that attribute on the player
+                // object by the cost amount * -1
+                changesToPlayer[shopItem.costType] = changesToPlayer.cost * -1;
+                delete changesToPlayer.cost;
+                delete changesToPlayer.costType;
+                delete changesToPlayer.costIncrease;
+
+                // at this point the item represents the changes to the player object that need to happen
+                for (var key in changesToPlayer) {
+                    player[key] += changesToPlayer[key]
+                }
+
+                // update the item's cost if needed
+                shopItem.cost = Math.floor(shopItem.cost * shopItem.costMultiplier)
+
+                // each time something is purchased, redraw the menu
+                Game.showMenu(data)
+            },
+
+            update: function (data) {
+                var player = data.entities.player;
+                var leftArrowDown = Input.helpers.isDown(37);
+                var rightArrowDown = Input.helpers.isDown(39);
+                var upArrowDown = Input.helpers.isDown(38);
+                var downArrowDown = Input.helpers.isDown(40);
+
+                player.direction = {
+                    left: false,
+                    up: false,
+                    right: false,
+                    down: false
+                }
+
+                if (leftArrowDown) {
+                    player.x -= player.velX
+                    player.direction.left = true;
+                }
+
+                if (rightArrowDown) {
+                    player.x += player.velX;
+                    player.direction.right = true;
+                }
+
+                if (upArrowDown) {
+                    player.y -= player.velY;
+                    player.direction.up = true;
+                }
+
+                if (downArrowDown) {
+                    player.y += player.velY;
+                    player.direction.down = true;
+                }
+            },
+
+            helpers: {
+                isDown: function (code) {
+                    return Input.helpers.down[code];
+                },
+
+                isPressed: function (code) {
+                    if (Input.helpers.pressed[code]) {
+                        return false;
+                    } else if (Input.helpers.down[code]) {
+                        return Input.helpers.pressed[code] = true;
+                    } else {
+                        return false;
+                    }
+                },
+
+                down: {},
+                pressed: {},
+            },
+        }
+
+        // Entities Script
+        var Entities = {
+            init: function (data) {
+                var background = {
+                    x: 0,
+                    y: 0,
+                    w: 1000,
+                    h: 800,
+                };
+
+                var player = new Entities.helpers.player();
+
+                data.entities = {
+                    background: background,
+                    player: player,
+                    wallsArray: [],
+                    enemiesArray: [],
+                    foodArray: [],
+                };
+
+                // put the walls up
+                var wallLocations = hudWalls.concat(edgeWalls);
+                wallLocations.forEach(function (wall) {
+                    var wallObj = new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3], WALL);
+                    var ignoreHudAreaWarning = wall[4];
+                    hudCheck(wallObj, ignoreHudAreaWarning);
+                    data.entities.wallsArray.push(wallObj)
+                });
+            },
+
+            clearLevelSpecificEntities: function (data) {
+                // remove all enemies and food
+                data.entities.enemiesArray = [];
+                data.entities.foodArray = [];
+                data.entities.moneyArray = [];
+                data.entities.warpArray = [];
+                // remove obstacle walls, keep edge and HUD walls
+                var newWallsArray = [];
+                data.entities.wallsArray.forEach(function (wall) {
+                    if (wall.wallType === WALL) newWallsArray.push(wall);
+                })
+                data.entities.wallsArray = newWallsArray;
+            },
+
+            initLevelSpecificEntities: function (data) {
+                // clear all level specific entities from previous levels
+                this.clearLevelSpecificEntities(data);
+
+                // if the player has completed all of the levels, we'll take them back to level 1
+                // but the enemies get tougher each time through
+                if (!entitiesForLevel[data.gameLevel]) {
+                    data.gameLevel = 1;
+                    data.gameLevelResets++
+                }
+
+                // get the entities specific to this level
+                var entitiesForThisLevel = entitiesForLevel[data.gameLevel];
+
+                // if we're running test mode, overwrite the entities with the test mode entities for the level
+                if (data.testMode) {
+                    for (var key in entitiesForThisLevel.testMode) {
+                        entitiesForThisLevel[key] = entitiesForThisLevel.testMode[key]
+                    }
+                }
+
+                // if we're running a custom built map, use those entities instead
+                if (data.playCustomMap) {
+                    entitiesForThisLevel = data.customEntities;
+                }
+
+                // move the player to the start location for this level
+                data.entities.player.x = entitiesForThisLevel.playerStartLocation.x
+                data.entities.player.y = entitiesForThisLevel.playerStartLocation.y
+
+                entitiesForThisLevel.obstacles.forEach(function (wall) {
+                    var wallObj = new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3], OBSTACLE);
+                    var ignoreHudAreaWarning = wall[4];
+                    hudCheck(wallObj, ignoreHudAreaWarning);
+                    data.entities.wallsArray.push(wallObj)
+                })
+
+                entitiesForThisLevel.enemyLocations.forEach(function (enemy) {
+                    var enemyObj = new Entities.helpers.Enemy(enemy[0], enemy[1], enemy[2], enemy[3], enemy[4]);
+                    hudCheck(enemyObj);
+                    data.entities.enemiesArray.push(enemyObj)
+                })
+
+                // put pieces of food on the board
+                entitiesForThisLevel.foodLocations.forEach(function (food) {
+                    var foodObj = new Entities.helpers.Food(food[0], food[1], food[2])
+                    hudCheck(foodObj);
+                    data.entities.foodArray.push(foodObj)
+                })
+
+                entitiesForThisLevel.moneyItems.forEach(function (obj) {
+                    var moneyFoodObj = new Entities.helpers.MoneyFood(obj);
+                    hudCheck(moneyFoodObj);
+                    data.entities.moneyArray.push(moneyFoodObj);
+                })
+
+                entitiesForThisLevel.warpLocations.forEach(function (warpObject) {
+                    var constructedExit = new Entities.helpers.Warp(warpObject.exit);
+                    warpObject.exit = constructedExit;
+                    var warpObj = new Entities.helpers.Warp(warpObject);
+                    hudCheck(warpObj);
+                    hudCheck(warpObj.exit);
+                    data.entities.warpArray.push(warpObj);
+                })
+
+                // if we're repeating levels, make the enemies better
+                // this if statement isn't really necessary because of the calculations we're
+                // doing, but it's nice visually to see what's happening here
+                if (data.gameLevelResets > 0) {
+                    data.entities.enemiesArray.forEach(function (enemy) {
+                        enemy.speed += data.gameLevelResets;
+                        enemy.strength += (data.gameLevelResets * 100);
+                        // at speeds greater than 8 (800) they tend to jump walls since walls are 8px thick
+                        if (enemy.speed > 8) enemy.speed = 8;
+                    })
+                }
+            },
+
+            update: function (data) {
+                data.entities.player.update(data);
+                data.entities.enemiesArray.forEach(function (enemy) {
+                    enemy.update(data);
+                })
+                data.entities.moneyArray.forEach(function (money) {
+                    money.update(data);
+                })
+            },
+
+            helpers: {
+                player: function () {
+                    var self = this;
+                    this.type = PLAYER;
+                    this.points = 0;
+
+                    // x & y will get set per level so these values don't matter
+                    this.x = 100;
+                    this.y = 100;
+                    this.w = 20;
+                    this.h = 20;
+                    this.color = 'white';
+                    this.direction = 'right';
+                    this.velY = 3;
+                    this.velX = 3;
+                    this.speed = 2;
+                    this.lives = 3;
+                    this.strength = 5;
+                    // while in ghost state, user can pass through walls and cannot lost lives
+                    this.inGhostState = false;
+                    this.enteredGhostStateTimestamp = null;
+                    this.ghostStateDuration = 5000;
+                    // money is used to buy things in the shop
+                    this.money = 40;
+                    // food is worth this many extra points for the player
+                    this.foodPointsIncrementer = 0;
+                    // text is displayed inside the entity's visual box
+                    this.text = function () {
+                        return [this.strength, Math.floor(this.speed * 100)]
+                    }
+
+                    this.update = function (data) {
+                        this.color = 'white';
+                        this.resetVelocities(data);
+                        this.handleGhostStateIfNecessary(data);
+                    }
+
+                    // reset velocities in case they were set to 0 during a collision
+                    this.resetVelocities = function (data) {
+                        this.velX = this.speed;
+                        this.velY = this.speed;
+                        return;
+                    }
+
+                    this.handleGhostStateIfNecessary = function (data) {
+                        if (this.inGhostState) {
+                            // blink gray
+                            this.color = 'gray';
+                            if (data.animationFrame % 8 === 0) this.color = 'black';
+
+                            // see if it's time to end ghost state
+                            var now = new Date().getTime();
+                            var ghostStateTimeElapsed = now - this.enteredGhostStateTimestamp;
+                            if (ghostStateTimeElapsed > this.ghostStateDuration) {
+                                this.inGhostState = false;
+                                this.enteredGhostStateTimestamp = null;
+                            }
+                        }
+                        return;
+                    }
+                },
+
+                Wall: function (x, y, w, h, wallType = OBSTACLE) {
+                    this.x = x;
+                    this.y = y;
+                    this.w = w;
+                    this.h = h;
+                    this.color = 'white';
+                    this.type = WALL;
+                    this.wallType = wallType;
+                },
+
+                Food: function (x, y, val) {
+                    this.getColor = function () {
+                        var colorMap = {
+                            1: '#00f',
+                            2: '#0f0',
+                            3: '#cc2',
+                            4: '#f5f',
+                            5: '#0ff',
+                            6: '#0f6',
+                            7: '#ff0',
+                            8: '#550',
+                            9: '#992'
+                        }
+                        return colorMap[this.value]
+                    }
+
+                    // we use id during collision to remove proper item from array
+                    this.id = random(100000, 1000000000);
+                    this.x = x ? x : random(0, data.canvas.width)
+                    this.y = y ? y : random(0, data.canvas.height)
+                    this.w = 12;
+                    this.h = 12;
+                    this.size = '15px';
+                    this.font = 'Arial';
+                    this.value = val;
+                    this.color = this.getColor();
+                    this.type = FOOD;
+                    // text is displayed inside the entity's visual box
+                    this.text = function () {
+                        return [this.value]
+                    }
+                },
+
+                Enemy: function (x, y, strength, speed, enemyType = 'normal') {
+                    // we'll use the id to make sure we delete the right enemy on collision
+                    this.id = random(100000, 1000000000);
+                    this.x = x;
+                    this.y = y;
+                    this.color = 'red';
+                    this.type = ENEMY;
+                    this.enemyType = enemyType;
+                    this.speed = speed;
+                    this.size = 20;
+                    this.w = this.size;
+                    this.h = this.size;
+                    // used to determine if the player kills the bot or vice versa
+                    this.strength = strength;
+                    // when the player is caught, the bots freeze for a bit
+                    this.frozen = false;
+                    this.frozenTimestamp = null;
+                    // text is displayed inside the entity's visual box
+                    this.text = function () {
+                        return [this.strength, Math.floor(this.speed * 100)]
+                    }
+
+                    this.update = function (data) {
+                        // if enemy is frozen, see if it's time to unfreeze
+                        // for now the freeze time will be equal to the speed, so faster ones are frozen longer
+                        if (this.frozen) {
+                            var now = new Date().getTime();
+                            if (now - this.frozenTimestamp > this.speed * 1000) {
+                                this.frozen = false;
+                                this.frozenTimestamp = null;
+                            }
+                            return;
+                        }
+
+                        var player = data.entities.player;
+                        var isFloater = this.enemyType === 'FLOATER'
+
+                        // helper function to see if there's a wall where the enemy wants to move
+                        // I'm going to be lenient with a few pixels since the user gets the same consideration
+                        function areaContainsWall(x1, x2, y1, y2, pixelAllowance) {
+                            var xAllowance = 0;
+                            var yAllowance = 0;
+                            // whole numbers or bust
+                            if (x2 - x1 > 8) xAllowance = Math.floor(pixelAllowance);
+                            if (y2 - y1 > 8) yAllowance = Math.floor(pixelAllowance);
+                            x1 = Math.floor(x1);
+                            x2 = Math.floor(x2);
+                            y1 = Math.floor(y1);
+                            y2 = Math.floor(y2);
+                            for (var i = x1 + xAllowance; i <= x2 - xAllowance; i++) {
+                                for (var j = y1 + yAllowance; j <= y2 - yAllowance; j++) {
+                                    var point = i + '|' + j;
+                                    if (data.wallsCache[point]) {
+                                        return true;
+                                    }
+                                }
+                            }
+                            return false;
+                        }
+
+                        // pixel allowance for this enemy is based on their speed. Faster ones have a higher 
+                        // chance of jumping a wall, so the pixel allowance is lower
+                        var pixelAllowance = 5 - this.speed;
+                        if (pixelAllowance < 1) pixelAllowance = 1;
+
+                        if (player.x <= this.x) {
+                            var newLeftLine = this.x - this.speed;
+                            var canMoveLeft = isFloater ||
+                                !areaContainsWall(newLeftLine, newLeftLine, this.y, this.y + this.h, pixelAllowance)
+                            if (canMoveLeft) {
+                                this.x -= this.speed;
+                            }
+                        }
+                        if (player.x >= this.x) {
+                            var newRightLine = this.x + this.w + this.speed;
+                            var canMoveRight = isFloater ||
+                                !areaContainsWall(newRightLine, newRightLine, this.y, this.y + this.h, pixelAllowance)
+                            if (canMoveRight) {
+                                this.x += this.speed;
+                            }
+                        }
+                        if (player.y <= this.y) {
+                            var newTopLine = this.y - this.speed;
+                            var canMoveUp = isFloater ||
+                                !areaContainsWall(this.x, this.x + this.w, newTopLine, newTopLine, pixelAllowance)
+                            if (canMoveUp) {
+                                this.y -= this.speed;
+                            }
+                        }
+                        if (player.y >= this.y) {
+                            var newBottomLine = this.y + this.h + this.speed;
+                            var canMoveDown = isFloater ||
+                                !areaContainsWall(this.x, this.x + this.w, newBottomLine, newBottomLine, pixelAllowance)
+                            if (canMoveDown) {
+                                this.y += this.speed
+                            }
+                        }
+                    }
+                },
+
+                // can only be eaten when it's 'alive'
+                MoneyFood: function (moneyObj) {
+                    // we use the id for collisions to remove the right one from array
+                    this.id = random(100000, 1000000000)
+                    this.type = MONEYFOOD;
+                    this.x = moneyObj.x;
+                    this.y = moneyObj.y;
+                    this.value = moneyObj.value;
+                    this.delayFromStartToShow = moneyObj.delayFromStartToShow;
+                    this.delayFromStartToDie = moneyObj.delayFromStartToDie;
+                    this.w = 13;
+                    this.h = 13;
+                    this.color = 'green';
+                    this.alive = false;
+
+                    this.text = function () {
+                        return ['$$']
+                    }
+
+                    this.update = function (data) {
+                        // shows up when it should & dies when it should
+                        var timeSinceLevelStart = new Date().getTime() - data.gameLevelStartTime;
+                        if (timeSinceLevelStart > this.delayFromStartToShow && timeSinceLevelStart < this.delayFromStartToDie) {
+                            this.alive = true;
+                        } else {
+                            this.alive = false;
+                        }
+
+                        // blinks sometimes & blinks faster before it dies
+                        if (this.alive) {
+                            var lifespan = this.delayFromStartToDie - this.delayFromStartToShow;
+                            var timeAlive = timeSinceLevelStart - this.delayFromStartToShow;
+                            var percentOfLifeLeft = Math.floor((lifespan - (timeAlive / lifespan)) * 100)
+                            if (data.animationFrame % percentOfLifeLeft === 0) {
+                                this.color = 'black'
+                            } else {
+                                this.color = 'green';
+                            }
+                        }
+                    }
+                },
+
+                HUDText: function (y, value) {
+                    this.x = 10;
+                    this.y = y;
+                    this.value = value;
+                    this.size = '20px';
+                    this.font = 'Arial';
+                    this.color = 'green';
+                    this.type = HUDTEXT
+                },
+
+                Warp: function (warpObject) {
+                    this.type = WARP;
+                    this.size = 5;
+                    this.w = this.size;
+                    this.h = this.size;
+                    this.color = '#f00';
+                    this.x = warpObject.x;
+                    this.y = warpObject.y;
+                    // the exit itself uses this constructor, so handle null exit attribute
+                    this.exit = warpObject.exit ? warpObject.exit : null;
+                }
+            }
+        }
+
+        // Render Script
+        var Render = {
+            init: function (data) {
+                Render.helpers.drawEntity(data.entities.background);
+            },
+
+            update: function (data) {
+                this.clearCanvas(data.canvas);
+
+                var levelText = new Entities.helpers.HUDText(27, 'Level: ' + data.gameLevel)
+                var pointsText = new Entities.helpers.HUDText(46, 'Points: ' + data.entities.player.points)
+                var livesText = new Entities.helpers.HUDText(64, 'Lives: ' + data.entities.player.lives)
+                var pointsIncrementerText = new Entities.helpers.HUDText(82, 'Food Bonus: ' + data.entities.player.foodPointsIncrementer)
+
+                Render.helpers.drawText(levelText);
+                Render.helpers.drawText(pointsText);
+                Render.helpers.drawText(livesText);
+                Render.helpers.drawText(pointsIncrementerText);
+
+                // draw all of the entities listed in arrays in the data object
+                for (var entityType in data.entities) {
+                    if (Array.isArray(data.entities[entityType])) {
+                        data.entities[entityType].forEach(function (entity) {
+                            if (entity.type === WARP) {
+                                // the warp location changes size per animation frame
+                                if (data.animationFrame % 2 === 0) {
+                                    var radiusMap = { 0: entity.size, 1: entity.size * 0.7, 2: entity.size * 0.4 };
+                                    var sizeForFrame = radiusMap[data.animationFrame % 3]
+                                    entity.r = sizeForFrame
+                                }
+                                // draw the warp location entry point
+                                Render.helpers.drawCircle(entity);
+
+                                // draw the exit
+                                entity.exit.r = entity.exit.size;
+                                Render.helpers.drawCircle(entity.exit);
+                            }
+                            else if (entity.type === MONEYFOOD) {
+                                if (entity.alive) {
+                                    // money only gets drawn when it's alive
+                                    Render.helpers.drawEntity(entity);
+                                }
+                            } else {
+                                // everything else gets drawn always
+                                Render.helpers.drawEntity(entity);
+                            }
+                        })
+                    }
+                }
+
+                // draw the player last so they show up on top of everything else
+                Render.helpers.drawEntity(data.entities.player);
+
+            },
+
+            clearCanvas: function (canvas) {
+                // default to the game canvas
+                if (!canvas) {
+                    var gameCanvas = document.getElementById('gameCanvas')
+                    canvas = {
+                        canvas: gameCanvas,
+                        context: gameCanvas.getContext('2d')
+                    }
+                }
+                canvas.context.clearRect(0, 0, canvas.canvas.width, canvas.canvas.height)
+            },
+
+            helpers: {
+                drawEntity: function (entity, ctx, color) {
+                    // default ctx to the game canvas
+                    if (!ctx) ctx = document.getElementById('gameCanvas').getContext('2d');
+
+                    // if color is passed in but no ctx, fix that
+                    if (!color && typeof ctx === 'string') {
+                        color = ctx;
+                        ctx = document.getElementById('gameCanvas').getContext('2d');
+                    }
+
+                    ctx.fillStyle = color ? color : entity.color ? entity.color : 'white';
+                    ctx.fillRect(entity.x, entity.y, entity.w, entity.h);
+
+                    // if the entity has text to display, draw that too
+                    if (entity.text) {
+                        var textArr = entity.text();
+                        ctx.fillStyle = 'black';
+                        ctx.font = 'bold 10px Arial';
+                        var textX = entity.x + 1;
+                        var textY = entity.y;
+                        textArr.forEach(function (str) {
+                            textY += 9;
+                            ctx.fillText(str, textX, textY);
+                        })
+                    }
+                },
+
+                drawText: function (text, ctx) {
+                    // default ctx to the game canvas
+                    if (!ctx) ctx = document.getElementById('gameCanvas').getContext('2d');
+
+                    // default values for drawing text
+                    if (!text.font) text.font = 'Arial';
+                    if (!text.color) text.color = 'white';
+                    if (!text.size) text.size = '14px';
+
+                    ctx.font = text.size + ' ' + text.font;
+                    ctx.fillStyle = text.color;
+                    ctx.fillText(text.value, text.x, text.y);
+                },
+
+                drawCircle: function (entity, ctx) {
+                    // default ctx to the game canvas
+                    if (!ctx) ctx = document.getElementById('gameCanvas').getContext('2d');
+
+                    ctx.fillStyle = entity.color ? entity.color : 'white';
+                    ctx.beginPath();
+                    ctx.arc(entity.x, entity.y, entity.r, 0, 2 * Math.PI);
+                    // ctx.stroke();
+                    ctx.closePath();
+                    ctx.fill();
+                }
+            }
+        }
+
+        // Physics Script
+        var Physics = {
+            update: function (data) {
+                Physics.collisionDetection(data);
+            },
+
+            collisionDetection: function (data) {
+                var player = data.entities.player;
+
+                function entityPlayerCollisionCheck(entity) {
+                    var entityLeft = entity.x;
+                    var entityRight = entity.x + entity.w;
+                    var entityTop = entity.y;
+                    var entityBottom = entity.y + entity.h;
+
+                    // since warps are circles, their collision box is offset from center
+                    if (entity.type === WARP) {
+                        var offset = entity.size / 2
+                        entityLeft -= offset;
+                        entityRight -= offset;
+                        entityTop -= offset;
+                        entityBottom -= offset;
+                    }
+
+                    // check for collision
+                    if (player.x < entityRight &&
+                        player.x + player.w > entityLeft &&
+                        player.y < entityBottom &&
+                        player.y + player.h > entityTop) {
+                        // Collision occurred
+                        Physics.handlePlayerCollision(data, entity);
+                    }
+                }
+
+                function enemyWallCollisionCheck(enemy, wall) {
+                    if (enemy.x < wall.x + wall.w &&
+                        enemy.x + enemy.w > wall.x &&
+                        enemy.y < wall.y + wall.h &&
+                        enemy.y + enemy.h > wall.y) {
+                        // Collision occurred
+                        Physics.handleEnemyWallCollision(data, enemy, wall);
+                    }
+                }
+
+                // check for collision with any of the entities listed in arrays in the data object
+                for (var entityType in data.entities) {
+                    if (Array.isArray(data.entities[entityType])) {
+                        data.entities[entityType].forEach(function (entity) {
+                            entityPlayerCollisionCheck(entity);
+                            // if it's an enemy, check if it's hitting any walls
+                            if (entity.type === ENEMY) {
+                                data.entities.wallsArray.forEach(function (wall) {
+                                    enemyWallCollisionCheck(entity, wall);
+                                })
+                            }
+                        })
+                    }
+                }
+            },
+
+            // for now I dont do anything here
+            handleEnemyWallCollision(data, enemy, wall) {
+            },
+
+            // biggest freaking function in the game
+            handlePlayerCollision(data, entity) {
+                // easy to read variables
+                var player = data.entities.player;
+                var playerLeftSide = player.x;
+                var playerRightSide = player.x + player.w;
+                var playerTopSide = player.y;
+                var playerBottomSide = player.y + player.h;
+
+                // when in ghost state, collisions can't happen (except edge walls still work)
+                var isEdgeWall = entity.type === WALL && entity.wallType === WALL;
+                if (player.inGhostState && !isEdgeWall) return;
+
+                if (entity.type === FOOD) {
+                    // adjust the player's points
+                    var foodPoints = entity.value + data.entities.player.foodPointsIncrementer
+                    data.entities.player.points += foodPoints;
+
+                    // remove the food from the array
+                    removeFromArrayById(data.entities.foodArray, entity.id);
+
+                    // check if the level is finished
+                    if (data.entities.foodArray.length === 0) {
+                        // pause the game (opens the shop) & go to the next level
+                        // the pause is just for UX, doesn't really serve a purpose other
+                        // than visually when you un-pause it it's on the next level
+                        data.startNextLevel = true;
+                    }
+                }
+
+                // food can only be eaten when it's alive
+                if (entity.type === MONEYFOOD && entity.alive) {
+                    // adjust the player's money
+                    var moneyValue = entity.value;
+                    data.entities.player.money += moneyValue;
+
+                    // remove the money item from the array
+                    removeFromArrayById(data.entities.moneyArray, entity.id);
+                }
+
+                if (entity.type === WALL) {
+                    var wallLeftSide = entity.x;
+                    var wallRightSide = entity.x + entity.w;
+                    var wallTopSide = entity.y;
+                    var wallBottomSide = entity.y + entity.h;
+                    // if the user is barely in the wall they can still move since we don't move them pixel by pixel and they might jump into it slightly
+                    var allowanceBuffer = player.speed;
+
+                    // player is in between the walls borders and not trying to move the other way
+                    if (!player.direction.right &&
+                        playerLeftSide > wallLeftSide &&
+                        playerLeftSide < wallRightSide &&
+                        playerRightSide > wallRightSide &&
+                        playerTopSide < wallBottomSide - allowanceBuffer &&
+                        playerBottomSide > wallTopSide + allowanceBuffer) {
+                        player.velX = 0;
+                    }
+
+                    if (!player.direction.left &&
+                        playerRightSide > wallLeftSide &&
+                        playerRightSide < wallRightSide &&
+                        playerLeftSide < wallLeftSide &&
+                        playerTopSide < wallBottomSide - allowanceBuffer &&
+                        playerBottomSide > wallTopSide + allowanceBuffer) {
+                        player.velX = 0;
+                    }
+
+                    if (!player.direction.down &&
+                        playerTopSide > wallTopSide &&
+                        playerTopSide < wallBottomSide &&
+                        playerBottomSide > wallBottomSide &&
+                        playerLeftSide < wallRightSide - allowanceBuffer &&
+                        playerRightSide > wallLeftSide + allowanceBuffer) {
+                        player.velY = 0;
+                    }
+
+                    if (!player.direction.up &&
+                        playerBottomSide > wallTopSide &&
+                        playerBottomSide < wallBottomSide &&
+                        playerTopSide < wallTopSide &&
+                        playerLeftSide < wallRightSide - allowanceBuffer &&
+                        playerRightSide > wallLeftSide + allowanceBuffer) {
+                        player.velY = 0;
+                    }
+                }
+
+                if (entity.type === WARP) {
+                    var offset = player.w / 2
+                    player.x = entity.exit.x - offset;
+                    player.y = entity.exit.y - offset;
+                }
+
+                if (entity.type === ENEMY) {
+                    // enemy dies and player gets the points equal to their strength
+                    // I could assign a enemy.pointValue if needed instead of their strength?
+                    if (player.strength > entity.strength) {
+                        removeFromArrayById(data.entities.enemiesArray, entity.id);
+                        player.points += entity.strength;
+                    }
+                    // player loses a life and enters ghost state for a short time
+                    // the enemy freezes momentarily while the player escapes
+                    else {
+                        player.lives--;
+                        player.inGhostState = true;
+                        player.enteredGhostStateTimestamp = new Date().getTime();
+
+                        // check if game is over
+                        if (player.lives < 1) {
+                            data.gameOver = true;
+                            data.gameRunning = false;
+
+                            // save high score locally
+                            return Game.handleHighScore(player.points);
+                        }
+
+                        // freezes all enemies once the player is hit
+                        data.entities.enemiesArray.forEach(function (enemy) {
+                            enemy.frozen = true;
+                            enemy.frozenTimestamp = new Date().getTime();
+                        })
+
+                        // freezes just the enemy that hit the player
+                        // entity.frozen = true;
+                        // entity.frozenTimestamp = new Date().getTime();
+                    }
+                }
+            }
+        }
+
+        // Game Script
+        var Game = {
+            // starts the game using the map built in the levelBuilder
+            initCustom: function () {
+                // cant start the map without food and a player obj
+                if (foodLocations.length < 1 || !playerStartLocation) return;
+                Game.init({
+                    playCustomMap: true,
+                    gameLevel: 1,
+                    customEntities: {
+                        playerStartLocation: playerStartLocation,
+                        obstacles: obstacles,
+                        foodLocations: foodLocations,
+                        enemyLocations: enemyLocations,
+                        warpLocations: warpLocations,
+                        moneyItems: moneyItems
+                    }
+                })
+            },
+            init: function (settings) {
+                if (!settings) settings = {};
+
+                // close the rules and hide the new game button
+                document.getElementById('hideDuringGameplay').style.display = 'none';
+
+                // see what level the user wants to start on
+                var gameLevelInput = document.getElementById('gameLevelInput')
+                var userSelectedLevel = Number(gameLevelInput.value);
+                var gameLevel = 1;
+                // if it's higher than we have, start them on 1
+                if (entitiesForLevel[userSelectedLevel]) gameLevel = userSelectedLevel;
+
+                var cv = document.getElementById('gameCanvas');
+                var ctx = cv.getContext('2d');
+
+                var canvas = {
+                    canvas: cv,
+                    context: ctx
+                }
+
+                var data = {
+                    animationFrame: 0,
+                    canvas: canvas,
+                    gameOver: false,
+                    gameRunning: true,
+                    gameLevel: gameLevel,
+                    gameLevelStartTime: new Date().getTime(),
+                    gameLevelResets: 0,
+                    shopItems: this.buildShop(),
+                    eventListeners: {},
+                }
+
+                // see if we're running test mode or not
+                if (settings.testMode) data.testMode = true;
+
+                // see if we're running a custom map or not
+                if (settings.playCustomMap) {
+                    data.playCustomMap = settings.playCustomMap;
+                    data.customEntities = settings.customEntities;
+                    data.gameLevel = settings.gameLevel;
+                }
+
+                // init game specific things
+                Entities.init(data);
+                Input.init(data);
+                Render.init(data);
+
+                // init level specific things
+                Game.initLevel(data);
+
+                // start the game loop
+                Game.run(data);
+            },
+
+            initLevel(data) {
+                // if we're playing on a custom map, return to the editor after finishing the level
+                if (data.playCustomMap && data.gameLevel !== 1) {
+                    data.gameOver = true;
+                }
+
+                // build level specific entities - walls, enemies, food, etc
+                Entities.initLevelSpecificEntities(data);
+                // cache the walls' locations for future reference
+                data.wallsCache = this.buildWallsCache(data)
+            },
+
+            run: function (data) {
+                window.gameLoopRunning = true;
+
+                var loop = function () {
+                    // end the loop if game is over
+                    if (data.gameOver) {
+                        window.gameLoopRunning = false;
+                        Game.handleGameOver(data);
+                        return;
+                    }
+
+                    // start the next level if needed
+                    if (data.startNextLevel) {
+                        data.startNextLevel = false;
+                        data.gameRunning = false;
+                        setTimeout(function () {
+                            data.gameLevel++;
+                            data.gameLevelStartTime = new Date().getTime();
+                            Game.initLevel(data);
+                        }, 1);
+                    }
+
+                    // if game is not paused, update things
+                    if (data.gameRunning && !data.buildingLevel) {
+                        Game.input(data);
+                        Game.update(data);
+                        Game.render(data);
+                    } else {
+                        Game.showMenu(data);
+                    }
+
+                    // keep the loop going
+                    data.animationFrame++;
+                    window.requestAnimationFrame(loop);
+                }
+
+                loop();
+            },
+
+            input: function (data) {
+                Input.update(data);
+            },
+
+            update: function (data) {
+                Entities.update(data);
+                Physics.update(data);
+            },
+
+            render: function (data) {
+                Render.update(data);
+            },
+
+            buildShop: function () {
+                // for now all items are permanent upgrades and can be purchased infinite times. 
+                // we can change either of those realities later if needed
+                var shopItems = {
+                    // trade points for money
+                    KeyO: {
+                        cost: 25,
+                        costMultiplier: 1,
+                        costType: 'money',
+                        points: 4,
+                    },
+                    KeyP: {
+                        cost: 50,
+                        costMultiplier: 1,
+                        costType: 'money',
+                        points: 9,
+                    },
+                    KeyK: {
+                        cost: 4,
+                        costMultiplier: 1,
+                        costType: 'points',
+                        money: 20
+                    },
+                    KeyL: {
+                        cost: 8,
+                        costMultiplier: 1,
+                        costType: 'points',
+                        money: 42
+                    },
+                    // buy powerups
+                    KeyQ: {
+                        cost: 10,
+                        costMultiplier: 1.5,
+                        costType: 'money',
+                        strength: 1,
+                    },
+                    KeyW: {
+                        cost: 10,
+                        costMultiplier: 1.5,
+                        costType: 'money',
+                        speed: 0.05,
+                    },
+                    KeyE: {
+                        cost: 100,
+                        costMultiplier: 1.2,
+                        costType: 'money',
+                        lives: 1
+                    },
+                    KeyR: {
+                        cost: 500,
+                        costMultiplier: 2,
+                        costType: 'money',
+                        foodPointsIncrementer: 1
+                    }
+                }
+                return shopItems;
+            },
+
+            // our map is only 500x500, so this happens in a fraction of a 
+            // second when the game loads (like 90ms)
+            buildWallsCache: function (data) {
+                var wallsCache = {};
+                for (var i = 0; i < data.entities.wallsArray.length; i++) {
+                    var wall = data.entities.wallsArray[i];
+                    // for each x,y point in the wall, cache that location
+                    for (var j = wall.x; j <= wall.x + wall.w; j++) {
+                        for (var k = wall.y; k <= wall.y + wall.h; k++) {
+                            var point = j + '|' + k;
+                            wallsCache[point] = true;
+                        }
+                    }
+                }
+                return wallsCache;
+            },
+
+            handleGameOver(data) {
+                // Display the new game button again so user can start game over
+                document.getElementById('hideDuringGameplay').style.display = 'block';
+
+                // unhook the event listeners
+                $(window).off('keydown', data.eventListeners.handleKeyDown)
+                $(window).off('keyup', data.eventListeners.handleKeyUp)
+                $(window).off('keypress', data.eventListeners.handleKeyPress)
+
+                // all movement keys up
+                Input.allMovementKeysUp();
+
+                // if we're playing a custom map, return to the editor
+                if (data.playCustomMap) {
+                    window.wall = true;
+                    return drawEverything();
+                }
+
+                // otherwise show the final score
+                var gameOverBox = {
+                    x: data.canvas.canvas.width * 0.25,
+                    y: data.canvas.canvas.height * 0.25,
+                    w: data.canvas.canvas.width / 2,
+                    h: data.canvas.canvas.height / 2,
+                    color: '#222',
+                }
+                var gameOverText = {
+                    x: gameOverBox.x + 10,
+                    y: gameOverBox.y + 50,
+                    size: '30px',
+                    color: 'white',
+                    value: 'Game Over'
+                }
+                var finalScoreText = {
+                    x: gameOverText.x,
+                    y: gameOverText.y + 30,
+                    size: '26px',
+                    value: 'Final Score: ' + data.entities.player.points
+                }
+
+                // show game over and points earned
+                Render.helpers.drawEntity(gameOverBox);
+                Render.helpers.drawText(gameOverText);
+                Render.helpers.drawText(finalScoreText);
+
+                // show local high score
+                var localHighScoreInfo = this.getLocalHighScoreInfo();
+                var savedHighScore = localHighScoreInfo.savedHighScore;
+                var savedScoreValidation = localHighScoreInfo.savedScoreValidation;
+                var isValidHighScore = this.validateHighScore(savedHighScore, savedScoreValidation);
+                var fakeGameIdText = {
+                    x: finalScoreText.x,
+                    y: finalScoreText.y + 22,
+                    value: 'Game Identifier: '
+                }
+                var scoreValidatorText = {
+                    x: fakeGameIdText.x,
+                    y: fakeGameIdText.y + 20,
+                    value: random(100000, 999999) + '-' + savedScoreValidation + '-' + random(100000, 999999)
+                }
+                var highScoreText = {
+                    x: scoreValidatorText.x,
+                    y: scoreValidatorText.y + 40,
+                    value: 'High Score: ' + savedHighScore
+                }
+                Render.helpers.drawText(fakeGameIdText)
+                Render.helpers.drawText(scoreValidatorText)
+                Render.helpers.drawText(highScoreText)
+            },
+
+            getLocalHighScoreInfo() {
+                return {
+                    savedHighScore: localStorage.highScore ? localStorage.highScore : 0,
+                    savedScoreValidation: localStorage.scoreValidation ? localStorage.scoreValidation : 0
+                }
+            },
+
+            handleHighScore(points) {
+                try {
+                    var localHighScoreInfo = this.getLocalHighScoreInfo();
+                    var savedHighScore = localHighScoreInfo.savedHighScore;
+                    var savedScoreValidation = localHighScoreInfo.savedScoreValidation;
+
+                    // check if old high score is valid
+                    var savedHighScoreIsValid = this.validateHighScore(savedHighScore, savedScoreValidation);
+
+                    // if the old score isn't valid OR 
+                    // the new score is higher than an old valid score, save the new one
+                    if (!savedHighScoreIsValid || points > savedHighScore) {
+                        localStorage.highScore = points;
+                        localStorage.scoreValidation = this.createScoreValidation(points)
+                    }
+                } catch (e) {
+                    console.log('Problem saving high score');
+                    console.log(e)
+                }
+            },
+
+            // this is just to keep track of if someone messed with the localStorage high score or not :)
+            // this can take in a string or number and be fine
+            createScoreValidation(points) {
+                if (!points) {
+                    return random(111111, 999999);
+                }
+
+                // put the points back to back
+                var pointsStr = points.toString();
+                var hash = 0;
+
+                // put the points back to back & base 64 encode it
+                var str = btoa(pointsStr + pointsStr);
+
+                // hash it
+                for (var i = 0; i < str.length; i++) {
+                    var char = str.charCodeAt(i);
+                    hash = ((hash << 5) - hash) + char;
+                    hash = hash & hash; // Convert to 32bit integer
+                }
+                return hash;
+            },
+
+            // this is just to keep track of if someone messed with the localStorage high score or not :)
+            // This function can take in strings or numbers and be fine
+            validateHighScore(score, scoreValidation) {
+                var trueValidation = Game.createScoreValidation(score);
+                trueValidation = trueValidation.toString();
+                scoreValidation = scoreValidation.toString();
+                return trueValidation === scoreValidation
+            },
+
+            showMenu(data) {
+                Render.clearCanvas(data.canvas);
+                // title
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width / 2 - 80,
+                    y: 50,
+                    size: '25px',
+                    value: 'Shop!!!'
+                });
+                // Shows the player
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width - 120,
+                    y: 55,
+                    value: 'You'
+                });
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width - 120,
+                    y: 80,
+                    value: 'Points: ' + data.entities.player.points
+                });
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width - 120,
+                    y: 100,
+                    value: 'Money: $' + data.entities.player.money
+                });
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width - 120,
+                    y: 120,
+                    value: 'Strength: ' + data.entities.player.strength
+                });
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width - 120,
+                    y: 140,
+                    value: 'Speed: ' + Math.round(data.entities.player.speed * 100)
+                });
+
+                // Trade points for money
+                Render.helpers.drawText({
+                    x: 20,
+                    y: 80,
+                    value: 'O: Trade $25 for 4 points'
+                })
+                Render.helpers.drawText({
+                    x: 20,
+                    y: 100,
+                    value: 'P: Trade $50 for 9 points'
+                })
+                Render.helpers.drawText({
+                    x: 20,
+                    y: 120,
+                    value: 'K: Trade 4 points for $20'
+                })
+                Render.helpers.drawText({
+                    x: 20,
+                    y: 140,
+                    value: 'L: Trade 8 points for $42'
+                })
+
+                // shop items
+                Render.helpers.drawText({
+                    x: 20,
+                    y: 210,
+                    value: 'Q: Strength Potion - ' + data.shopItems.KeyQ.strength + ' strength - $' + data.shopItems.KeyQ.cost
+                })
+                Render.helpers.drawText({
+                    x: 20,
+                    y: 235,
+                    value: 'W: Speed Potion - ' + (data.shopItems.KeyW.speed * 100) + ' speed - $' + data.shopItems.KeyW.cost
+                })
+                Render.helpers.drawText({
+                    x: 20,
+                    y: 260,
+                    value: 'E: Extra Life - ' + data.shopItems.KeyE.lives + ' life - $' + data.shopItems.KeyE.cost
+                })
+                Render.helpers.drawText({
+                    x: 20,
+                    y: 285,
+                    value: 'R: Increase food point values by ' + data.shopItems.KeyR.foodPointsIncrementer + ' - $' + data.shopItems.KeyR.cost
+                })
+            }
+        }
+
+        //
+        //
+        //
+        //
+        //
+        // Level builder functions for local machine
+        //
+        //
+        //
+        //
+        //
+
+        // start off drawing walls
+        window.wall = true;
+
+        // these are all empty to start, but you can copy into the console in the window if needed
+        var playerStartLocation = {};
+        var obstacles = [];
+        var foodLocations = [];
+        var foodValue = 1;
+        var enemyLocations = [];
+        var moneyItems = [];
+        var moneyStartTime = 5000;
+        var warpLocations = [];
+
+        function drawEverything() {
+            // if a game is in progress, do nothing
+            if (window.gameLoopRumning) return;
+
+            // clear board then draw everything
+            Render.clearCanvas();
+
+            var walls = hudWalls.concat(edgeWalls);
+            walls.forEach(function (wall) {
+                var wallObj = new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3], WALL);
+                Render.helpers.drawEntity(wallObj);
+            })
+            obstacles.forEach(function (wall) {
+                var wallObj = new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3], OBSTACLE)
+                Render.helpers.drawEntity(wallObj);
+            })
+            foodLocations.forEach(function (obj) {
+                var foodObj = new Entities.helpers.Food(obj[0], obj[1], obj[2]);
+                Render.helpers.drawEntity(foodObj)
+            })
+            enemyLocations.forEach(function (enemy) {
+                var enemyObj = new Entities.helpers.Enemy(enemy[0], enemy[1], enemy[2], enemy[3], enemy[4]);
+                Render.helpers.drawEntity(enemyObj)
+            })
+            moneyItems.forEach(function (moneyObj) {
+                var money = new Entities.helpers.MoneyFood(moneyObj);
+                Render.helpers.drawEntity(money)
+            })
+            warpLocations.forEach(function (warpObj) {
+                var exit = new Entities.helpers.Warp(warpObj.exit);
+                var warp = new Entities.helpers.Warp(warpObj);
+                warp.r = warp.size
+                exit.r = exit.size;
+                warp.exit = exit;
+                Render.helpers.drawCircle(warp);
+                Render.helpers.drawCircle(exit);
+            })
+            // draw the player obj  
+            if (window.playerObj) {
+                Render.helpers.drawEntity(window.playerObj)
+            }
+        }
+
+        // draw the edge/hud walls right off the bat
+        drawEverything();
+
+        function copyObstacles() {
+            var obs = (JSON.stringify(obstacles))
+            console.log(obs)
+        }
+
+        function copyFood() {
+            var foodStr = (JSON.stringify(foodLocations))
+            console.log(foodStr)
+        }
+
+        function copyEnemies() {
+            var enemyLocationsStr = (JSON.stringify(enemyLocations))
+            console.log(enemyLocationsStr)
+        }
+
+        function copyMoney() {
+            console.log(JSON.stringify(moneyItems))
+        }
+
+        function copyWarps() {
+            console.log(JSON.stringify(warpLocations))
+        }
+
+        // copy in what's already there for the level to start from that point
+        function startFromSave(obj) {
+            /*
+            example object
+                {
+                    playerStartLocation: { x: 64, y: 98 },
+                    obstacles: [],
+                    enemyLocations: [],
+                    foodLocations: [],
+                    moneyItems: [],
+                    warpLocations: [],
+                }
+            */
+            window.playerObj = new Entities.helpers.player(obj.playerStartLocation);
+            obstacles = obj.obstacles;
+            enemyLocations = obj.enemyLocations;
+            foodLocations = obj.foodLocations;
+            moneyItems = obj.moneyItems;
+            warpLocations = obj.warpLocations;
+
+            drawEverything();
+        }
+
+        $(window).on('keypress', function (event) {
+            // if a game is in progress, do nothing
+            if (window.gameLoopRunning) return;
+
+            // hit "T" 3 times in a row to start test map
+            if (event.code === 'KeyT') {
+                if (!window.timesTPressed) window.timesTPressed = 0;
+                window.timesTPressed++;
+                if (window.timesTPressed >= 3) {
+                    window.timesTPressed = 0;
+                    Game.init({ testMode: true })
+                }
+            } else {
+                window.timesTPressed = 0;
+            }
+
+            // hit "C" 3 times in a row to start test map
+            if (event.code === 'KeyC') {
+                if (!window.timesCPressed) window.timesCPressed = 0;
+                window.timesCPressed++;
+                if (window.timesCPressed >= 3) {
+                    Game.initCustom();
+                }
+            } else {
+                window.timesCPressed = 0;
+            }
+
+            // if we're placing food, the numbers will switch the food value for the next one to go down
+            if (event.keyCode >= 49 && event.keyCode <= 57 && window.food) {
+                return window.foodValue = Number(event.key)
+            }
+
+            var entityMap = {
+                KeyE: 'enemy',
+                KeyF: 'food',
+                KeyW: 'warp',
+                KeyO: 'wall',
+                KeyM: 'money',
+                KeyP: 'player'
+            }
+            for (var key in entityMap) {
+                window[entityMap[key]] = false;
+            }
+            var entityType = entityMap[event.code];
+            window[entityType] = true;
+
+            return;
+        })
+
+        $('#gameCanvas').on('click', function (event) {
+            var point = [event.offsetX, event.offsetY];
+
+            if (window.player) {
+                point[0] -= 10;
+                point[1] -= 10
+                if (!window.playerObj) {
+                    window.playerObj = new Entities.helpers.player();
+                }
+                window.playerObj.x = point[0];
+                window.playerObj.y = point[1];
+                playerStartLocation = { x: point[0], y: point[1] }
+                console.log(point);
+            }
+
+            if (window.food) {
+                point[0] -= 6
+                point[1] -= 6
+                point.push(window.foodValue);
+                foodLocations.push(point);
+            }
+
+            if (window.enemy) {
+                point[0] -= 10
+                point[1] -= 10
+                point.push(20, 2, enemyType.NORMAL);
+                enemyLocations.push(point);
+            }
+
+            if (window.warp) {
+                point[0] -= 1;
+                point[1] -= 1
+                if (!window.beginWarpPoint) {
+                    window.beginWarpPoint = point;
+                } else {
+                    warpLocations.push({
+                        x: window.beginWarpPoint[0],
+                        y: window.beginWarpPoint[1],
+                        exit: { x: point[0], y: point[1] }
+                    })
+                    window.beginWarpPoint = null;
+                }
+            }
+
+            if (window.money) {
+                point[0] -= 4;
+                point[1] -= 4;
+                moneyItems.push({
+                    x: point[0], y: point[1], value: 20,
+                    delayFromStartToShow: moneyStartTime,
+                    delayFromStartToDie: moneyStartTime + 30000
+                })
+                moneyStartTime += 10000
+            }
+
+            if (window.wall) {
+                if (!window.beginPoint) {
+                    window.beginPoint = point;
+                } else {
+                    // make it so clicking any direction will work
+                    if (window.beginPoint[0] > point[0]) {
+                        var temp = window.beginPoint[0];
+                        window.beginPoint[0] = point[0]
+                        point[0] = temp;
+                    }
+                    if (window.beginPoint[1] > point[1]) {
+                        var temp = window.beginPoint[1];
+                        window.beginPoint[1] = point[1];
+                        point[1] = temp;
+                    }
+
+                    // make the wall 8 pixels thick
+                    var width = point[0] - window.beginPoint[0];
+                    var height = point[1] - window.beginPoint[1];
+                    if (width > height) height = 8;
+                    else width = 8;
+
+                    // draw the wall
+                    window.beginPoint.push(width, height)
+                    obstacles.push(window.beginPoint);
+                    window.beginPoint = null;
+                }
+            }
+
+            drawEverything();
+            return;
+        })
+
+    </script>
+
+</body>
+
+</html>
