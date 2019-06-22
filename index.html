@@ -18,6 +18,17 @@
             background: #222;
         }
 
+        #startLevelText {
+            color: #999;
+        }
+
+        #newGameButton {
+            width: 200px;
+            height: 50px;
+            margin-bottom: 10px;
+            box-shadow: 1px solid black;
+        }
+
         #rulesHeader {
             text-decoration: underline;
         }
@@ -31,12 +42,12 @@
 
         #gameCanvas {
             background: black;
-            /* display: none; */
         }
     </style>
 
     <main>
         <canvas id="gameCanvas"></canvas>
+        <p id="startLevelText">Start Level: <span><input id='gameLevelInput' /></span></p>
         <button id="newGameButton" onclick="Game.init()">New Game</button>
         <div id="rules">
             <h2 id="rulesHeader">How To Play</h2>
@@ -106,7 +117,10 @@
                 enemyLocations: [[275, 308, 20, 2, "NORMAL"], [430, 12, 20, 2, "NORMAL"]],
                 foodLocations: [[15, 387, 1], [15, 414, 1], [15, 440, 1], [16, 468, 1], [39, 470, 2], [67, 470, 2], [95, 470, 1], [95, 443, 1], [95, 414, 1], [95, 387, 1], [43, 386, 1], [71, 386, 1], [131, 469, 1], [133, 444, 1], [132, 419, 1], [96, 348, 1], [70, 347, 1], [46, 344, 1], [23, 344, 1], [21, 315, 1], [21, 286, 1], [21, 257, 1], [20, 207, 1], [20, 183, 1], [21, 154, 1], [21, 127, 1], [22, 105, 2], [46, 107, 1], [70, 106, 1], [94, 106, 1], [122, 323, 1], [125, 301, 1], [125, 278, 1], [123, 259, 1], [121, 207, 1], [118, 187, 1], [117, 160, 1], [118, 132, 1], [118, 106, 1], [59, 232, 1], [82, 232, 1], [188, 346, 1], [160, 344, 1], [159, 310, 1], [158, 276, 1], [158, 239, 1], [158, 207, 1], [159, 169, 1], [159, 139, 1], [159, 108, 1], [165, 77, 2], [167, 47, 2], [167, 21, 2], [190, 21, 3], [214, 22, 2], [239, 20, 2], [264, 21, 2], [290, 21, 1], [321, 21, 1], [375, 24, 1], [403, 23, 1], [436, 23, 1], [471, 20, 1], [352, 166, 1], [353, 130, 1], [353, 102, 1], [353, 72, 1], [353, 44, 1], [351, 26, 1], [427, 76, 1], [425, 259, 1], [426, 424, 1], [469, 423, 1], [468, 390, 1], [468, 360, 1], [467, 332, 1], [466, 299, 1], [465, 274, 1], [465, 249, 1], [464, 223, 1], [464, 195, 1], [465, 170, 1], [463, 145, 1], [465, 123, 1], [465, 103, 1], [465, 78, 1], [392, 78, 1], [392, 108, 1], [390, 139, 1], [390, 171, 1], [390, 207, 1], [390, 237, 1], [390, 282, 1], [392, 316, 1], [391, 360, 1], [393, 390, 1], [394, 420, 1], [472, 450, 1], [467, 472, 1], [436, 471, 1], [405, 471, 1], [381, 471, 1], [326, 470, 1], [295, 470, 1], [260, 470, 1], [226, 470, 1], [195, 471, 1], [171, 471, 1], [168, 447, 1], [169, 428, 1], [198, 427, 1], [227, 428, 1], [260, 429, 1], [294, 431, 1], [319, 431, 1], [319, 374, 1], [320, 348, 1], [360, 338, 1], [358, 370, 1], [358, 396, 2], [357, 426, 2], [357, 451, 2], [357, 472, 2], [133, 388, 1], [166, 388, 1], [199, 388, 1], [244, 389, 1], [281, 390, 1], [248, 345, 1], [276, 345, 1], [197, 307, 2], [197, 282, 2], [195, 257, 2], [224, 249, 2], [228, 313, 2], [250, 308, 2], [248, 275, 2], [250, 253, 2], [280, 253, 2], [279, 271, 1], [303, 272, 1], [348, 272, 1], [323, 272, 1], [350, 246, 1], [349, 222, 1], [323, 239, 1], [324, 223, 1], [293, 206, 1], [253, 205, 1], [216, 205, 1], [189, 208, 1], [225, 355, 1], [224, 391, 1]],
                 moneyItems: [{ "x": 220, "y": 82, "value": 20, "delayFromStartToShow": 5000, "delayFromStartToDie": 35000 }, { "x": 130, "y": 392, "value": 20, "delayFromStartToShow": 15000, "delayFromStartToDie": 45000 }, { "x": 282, "y": 82, "value": 20, "delayFromStartToShow": 25000, "delayFromStartToDie": 55000 }, { "x": 400, "y": 421, "value": 20, "delayFromStartToShow": 35000, "delayFromStartToDie": 65000 }, { "x": 224, "y": 147, "value": 20, "delayFromStartToShow": 45000, "delayFromStartToDie": 75000 }, { "x": 118, "y": 234, "value": 20, "delayFromStartToShow": 55000, "delayFromStartToDie": 85000 }],
-                warpLocations: [{ "x": 357, "y": 473, "exit": { "x": 307, "y": 166 } }, { "x": 199, "y": 61, "exit": { "x": 19, "y": 344 } }]
+                warpLocations: [{ "x": 357, "y": 473, "exit": { "x": 307, "y": 166 } }, { "x": 199, "y": 61, "exit": { "x": 19, "y": 344 } }],
+                testMode: {
+                    foodLocations: [[150, 387, 1]]
+                }
             },
             2: {
                 playerStartLocation: { x: 64, y: 98 },
@@ -114,7 +128,11 @@
                 enemyLocations: [[384, 88, 20, 2, "NORMAL"], [287, 425, 20, 0.5, enemyType.FLOATER]],
                 foodLocations: [[21, 160, 2], [42, 156, 2], [71, 159, 2], [101, 160, 2], [129, 160, 2], [160, 160, 2], [183, 160, 2], [17, 201, 3], [36, 199, 3], [57, 199, 3], [85, 201, 3], [106, 200, 3], [131, 200, 3], [154, 200, 3], [182, 199, 3], [15, 245, 4], [142, 244, 4], [37, 241, 1], [63, 241, 1], [91, 241, 1], [116, 241, 1], [13, 276, 2], [15, 304, 2], [13, 330, 2], [13, 355, 2], [12, 382, 2], [41, 384, 2], [67, 384, 2], [99, 384, 2], [127, 383, 2], [136, 353, 2], [136, 326, 2], [135, 296, 2], [139, 267, 2], [143, 409, 3], [112, 410, 3], [124, 423, 4], [82, 421, 2], [51, 422, 2], [19, 420, 2], [17, 447, 2], [16, 474, 2], [53, 471, 2], [86, 471, 2], [116, 470, 2], [150, 469, 2], [185, 469, 2], [183, 428, 2], [180, 373, 2], [178, 326, 2], [177, 277, 2], [179, 235, 2], [220, 294, 2], [244, 292, 2], [268, 293, 2], [292, 292, 2], [265, 319, 2], [292, 320, 2], [257, 362, 4], [314, 417, 4], [217, 385, 2], [207, 432, 2], [244, 429, 2], [251, 383, 2], [290, 357, 2], [289, 387, 2], [289, 418, 2], [355, 439, 2], [305, 450, 2], [241, 465, 2], [349, 465, 2], [397, 466, 2], [397, 421, 2], [393, 378, 2], [363, 399, 2], [360, 373, 2], [326, 379, 2], [423, 460, 5], [455, 416, 5], [431, 414, 2], [435, 380, 2], [460, 379, 2], [471, 336, 2], [435, 333, 2], [389, 330, 2], [346, 330, 2], [325, 296, 2], [323, 258, 2], [279, 253, 2], [240, 252, 2], [221, 222, 2], [261, 215, 2], [283, 190, 2], [246, 180, 2], [219, 178, 2], [218, 139, 2], [242, 153, 2], [240, 140, 2], [252, 154, 2], [252, 139, 2], [262, 152, 2], [264, 135, 2], [274, 152, 2], [276, 135, 2], [285, 109, 2], [250, 101, 2], [220, 101, 2], [218, 64, 2], [250, 61, 2], [278, 60, 2], [276, 25, 2], [219, 17, 4], [244, 20, 3], [317, 16, 2], [358, 11, 1], [389, 6, 1], [412, 12, 1], [446, 11, 1], [469, 12, 1], [321, 48, 2], [321, 81, 2], [321, 107, 2], [315, 146, 2], [319, 175, 2], [319, 208, 2], [352, 221, 2], [386, 222, 2], [426, 217, 2], [462, 219, 2], [467, 257, 2], [470, 294, 2], [358, 179, 2], [388, 179, 2], [428, 174, 2], [459, 174, 2], [392, 142, 3], [389, 112, 3], [392, 82, 3], [455, 139, 2], [453, 96, 2], [456, 54, 2], [362, 48, 4], [415, 46, 4]],
                 moneyItems: [{ "x": 135, "y": 312, "value": 20, "delayFromStartToShow": 5000, "delayFromStartToDie": 35000 }, { "x": 285, "y": 311, "value": 20, "delayFromStartToShow": 15000, "delayFromStartToDie": 45000 }, { "x": 392, "y": 226, "value": 20, "delayFromStartToShow": 25000, "delayFromStartToDie": 55000 }, { "x": 272, "y": 102, "value": 20, "delayFromStartToShow": 35000, "delayFromStartToDie": 65000 }, { "x": 26, "y": 427, "value": 20, "delayFromStartToShow": 45000, "delayFromStartToDie": 75000 }, { "x": 360, "y": 466, "value": 20, "delayFromStartToShow": 55000, "delayFromStartToDie": 85000 }, { "x": 189, "y": 128, "value": 20, "delayFromStartToShow": 65000, "delayFromStartToDie": 95000 }],
-                warpLocations: [{ "x": 14, "y": 159, "exit": { "x": 18, "y": 109 } }, { "x": 170, "y": 137, "exit": { "x": 449, "y": 470 } }, { "x": 196, "y": 109, "exit": { "x": 480, "y": 425 } }, { "x": 396, "y": 60, "exit": { "x": 163, "y": 13 } }]
+                warpLocations: [{ "x": 14, "y": 159, "exit": { "x": 18, "y": 109 } }, { "x": 170, "y": 137, "exit": { "x": 449, "y": 470 } }, { "x": 196, "y": 109, "exit": { "x": 480, "y": 425 } }, { "x": 396, "y": 60, "exit": { "x": 163, "y": 13 } }],
+                testMode: {
+                    enemyLocations: [[384, 88, 20, 2, "NORMAL"]],
+                    foodLocations: [[21, 160, 2]],
+                }
             },
             3: {
                 playerStartLocation: { x: 225, y: 197 },
@@ -122,7 +140,11 @@
                 enemyLocations: [[95, 194, 8, 3.5, enemyType.SPEEDY], [358, 194, 8, 3.5, enemyType.SPEEDY], [226, 391, 95, 1.3, enemyType.TANK], [224, 46, 100, 1.2, enemyType.TANK], [409, 108, 115, 1.1, enemyType.TANK], [407, 368, 150, 1, enemyType.TANK], [14, 209, 85, 1.4, enemyType.TANK], [11, 264, 50, 1, enemyType.FLOATER], [92, 454, 100, 1.2, enemyType.TANK], [332, 455, 100, 1.2, enemyType.TANK]],
                 foodLocations: [[139, 200, 3], [166, 196, 3], [198, 196, 3], [267, 198, 3], [305, 197, 3], [337, 195, 3], [138, 251, 4], [168, 249, 4], [197, 249, 4], [230, 251, 4], [264, 249, 4], [297, 249, 4], [335, 249, 4], [136, 155, 4], [162, 156, 4], [192, 155, 4], [216, 153, 4], [247, 151, 4], [282, 151, 4], [321, 153, 4], [144, 343, 5], [187, 342, 5], [233, 341, 5], [281, 340, 5], [330, 341, 5], [14, 117, 6], [184, 11, 6], [17, 269, 3], [16, 300, 3], [12, 341, 3], [16, 380, 3], [16, 420, 3], [17, 454, 3], [54, 454, 3], [103, 457, 3], [142, 454, 3], [192, 453, 3], [228, 456, 3], [284, 449, 3], [334, 452, 3], [366, 454, 3], [365, 454, 3], [390, 459, 3], [411, 472, 3], [446, 472, 3], [472, 471, 3], [471, 430, 3], [468, 378, 3], [431, 374, 3], [388, 375, 3], [367, 414, 3], [367, 374, 3], [323, 399, 3], [274, 399, 3], [210, 399, 3], [140, 393, 3], [98, 395, 3], [58, 397, 3], [56, 356, 3], [56, 318, 3], [55, 278, 3], [55, 247, 3], [57, 211, 3], [20, 211, 3], [17, 179, 3], [58, 177, 3], [17, 145, 3], [62, 138, 3], [62, 111, 3], [368, 335, 3], [364, 291, 3], [365, 254, 3], [365, 200, 3], [363, 161, 3], [363, 118, 3], [391, 119, 3], [425, 118, 3], [465, 116, 3], [470, 174, 3], [470, 233, 3], [469, 279, 3], [469, 333, 3], [470, 77, 3], [467, 35, 3], [427, 16, 3], [375, 14, 3], [346, 19, 3], [347, 59, 3], [332, 103, 3], [287, 101, 3], [232, 100, 3], [181, 98, 3], [175, 57, 3], [221, 57, 3], [274, 57, 3], [308, 52, 3], [304, 14, 3], [270, 14, 3], [224, 11, 3], [104, 110, 3], [110, 155, 3], [99, 213, 3], [106, 249, 3], [105, 281, 3], [102, 324, 3], [174, 393, 3]],
                 moneyItems: [{ "x": 110, "y": 151, "value": 20, "delayFromStartToShow": 5000, "delayFromStartToDie": 35000 }, { "x": 475, "y": 57, "value": 20, "delayFromStartToShow": 15000, "delayFromStartToDie": 45000 }, { "x": 292, "y": 50, "value": 20, "delayFromStartToShow": 25000, "delayFromStartToDie": 55000 }, { "x": 58, "y": 240, "value": 20, "delayFromStartToShow": 35000, "delayFromStartToDie": 65000 }, { "x": 60, "y": 404, "value": 20, "delayFromStartToShow": 45000, "delayFromStartToDie": 75000 }, { "x": 294, "y": 456, "value": 20, "delayFromStartToShow": 55000, "delayFromStartToDie": 85000 }, { "x": 468, "y": 375, "value": 20, "delayFromStartToShow": 65000, "delayFromStartToDie": 95000 }, { "x": 325, "y": 202, "value": 20, "delayFromStartToShow": 75000, "delayFromStartToDie": 105000 }],
-                warpLocations: [{ "x": 21, "y": 105, "exit": { "x": 221, "y": 18 } }, { "x": 163, "y": 14, "exit": { "x": 21, "y": 146 } }]
+                warpLocations: [{ "x": 21, "y": 105, "exit": { "x": 221, "y": 18 } }, { "x": 163, "y": 14, "exit": { "x": 21, "y": 146 } }],
+                testMode: {
+                    enemyLocations: [[226, 391, 95, 1.3, enemyType.TANK]],
+                    foodLocations: [[139, 200, 3]],
+                }
             }
         }
 
@@ -159,35 +181,54 @@
             },
 
             setMovementKeys: function (data) {
-                $(window).on('keydown', function () {
+                data.eventListeners.handleKeyDown = function () {
                     // keeps arrow keys from scrolling the page
                     if (event.keyCode >= 37 && event.keyCode <= 40) {
                         event.preventDefault();
                     }
                     Input.helpers.down[event.keyCode] = true;
-                });
-
-                $(window).keyup(function () {
+                }
+                data.eventListeners.handleKeyUp = function () {
                     delete Input.helpers.down[event.keyCode];
                     delete Input.helpers.pressed[event.keyCode];
-                })
+                }
+                $(window).on('keydown', data.eventListeners.handleKeyDown);
+                $(window).on('keyup', data.eventListeners.handleKeyUp)
+            },
+
+            // stops player movement
+            allMovementKeysUp: function(data){
+                delete Input.helpers.down['37'];
+                delete Input.helpers.pressed['37'];
+                delete Input.helpers.down['38'];
+                delete Input.helpers.pressed['38'];
+                delete Input.helpers.down['39'];
+                delete Input.helpers.pressed['39'];
+                delete Input.helpers.down['40'];
+                delete Input.helpers.pressed['40'];
             },
 
             setMenuKeys: function (data) {
-                $(window).on('keypress', function () {
+                data.eventListeners.handleKeyPress = function () {
                     // space bar pauses game which opens menu
                     if (event.keyCode === 32) {
                         event.preventDefault();
+                        Input.allMovementKeysUp(data);
                         data.gameRunning = !data.gameRunning;
                     }
                     // while menu is open, hotkeys trigger menu transactions
                     if (!data.gameRunning) {
                         Input.handleShopPurchases(data, event);
                     }
-                })
+                }
+                $(window).on('keypress', data.eventListeners.handleKeyPress);
             },
 
             handleShopPurchases(data, event) {
+                // if the game is over, do nothing
+                if (data.gameOver) return;
+
+                // otherwise buy stuff
                 var shopItem = data.shopItems[event.code];
                 if (!shopItem) return;
 
@@ -303,9 +344,7 @@
                     var ignoreHudAreaWarning = wall[4];
                     hudCheck(wallObj, ignoreHudAreaWarning);
                     data.entities.wallsArray.push(wallObj)
-                })
-
-                this.initLevelSpecificEntities(data);
+                });
             },
 
             clearLevelSpecificEntities: function (data) {
@@ -335,6 +374,18 @@
 
                 // get the entities specific to this level
                 var entitiesForThisLevel = entitiesForLevel[data.gameLevel];
+
+                // if we're running test mode, overwrite the entities with the test mode entities for the level
+                if (data.testMode) {
+                    for (var key in entitiesForThisLevel.testMode) {
+                        entitiesForThisLevel[key] = entitiesForThisLevel.testMode[key]
+                    }
+                }
+
+                // if we're running a custom built map, use those entities instead
+                if (data.playCustomMap) {
+                    entitiesForThisLevel = data.customEntities;
+                }
 
                 // move the player to the start location for this level
                 data.entities.player.x = entitiesForThisLevel.playerStartLocation.x
@@ -381,7 +432,9 @@
                 if (data.gameLevelResets > 0) {
                     data.entities.enemiesArray.forEach(function (enemy) {
                         enemy.speed += data.gameLevelResets;
-                        enemy.strength += (data.gameLevelResets * 100)
+                        enemy.strength += (data.gameLevelResets * 100);
+                        // at speeds greater than 8 (800) they tend to jump walls since walls are 8px thick
+                        if (enemy.speed > 8) enemy.speed = 8;
                     })
                 }
             },
@@ -510,24 +563,14 @@
                     this.type = ENEMY;
                     this.enemyType = enemyType;
                     this.speed = speed;
+                    this.size = 20;
+                    this.w = this.size;
+                    this.h = this.size;
                     // used to determine if the player kills the bot or vice versa
                     this.strength = strength;
                     // when the player is caught, the bots freeze for a bit
                     this.frozen = false;
                     this.frozenTimestamp = null;
-                    // faster ones are bigger so you can lose them in small spaces
-                    var sizeMap = {
-                        normal: 20,
-                        tank: 15,
-                        lightweight: 30
-                    }
-                    // default size is 20
-                    this.size = 20;
-                    if (sizeMap[this.enemyType]) {
-                        this.size = sizeMap[this.enemyType]
-                    }
-                    this.w = this.size;
-                    this.h = this.size;
                     // text is displayed inside the entity's visual box
                     this.text = function () {
                         return [this.strength, Math.floor(this.speed * 100)]
@@ -571,15 +614,23 @@
                             return false;
                         }
 
+                        function debugLog(args, enemyType) {
+                            if (data.gameLevel === 2 && enemyType === 'NORMAL' && data.animationFrame % 10 === 0) {
+                                console.log(args)
+                            }
+                        }
+
                         // pixel allowance for this enemy is based on their speed. Faster ones have a higher 
                         // chance of jumping a wall, so the pixel allowance is lower
                         var pixelAllowance = 5 - this.speed;
                         if (pixelAllowance < 1) pixelAllowance = 1;
+                        debugLog(this.speed, this.enemyType);
 
                         if (player.x <= this.x) {
                             var newLeftLine = this.x - this.speed;
                             var canMoveLeft = isFloater ||
                                 !areaContainsWall(newLeftLine, newLeftLine, this.y, this.y + this.h, pixelAllowance)
+                            debugLog('can move left: ' + canMoveLeft, this.enemyType)
                             if (canMoveLeft) {
                                 this.x -= this.speed;
                             }
@@ -588,6 +639,7 @@
                             var newRightLine = this.x + this.w + this.speed;
                             var canMoveRight = isFloater ||
                                 !areaContainsWall(newRightLine, newRightLine, this.y, this.y + this.h, pixelAllowance)
+                            debugLog('can move right: ' + canMoveRight, this.enemyType)
                             if (canMoveRight) {
                                 this.x += this.speed;
                             }
@@ -596,6 +648,7 @@
                             var newTopLine = this.y - this.speed;
                             var canMoveUp = isFloater ||
                                 !areaContainsWall(this.x, this.x + this.w, newTopLine, newTopLine, pixelAllowance)
+                            debugLog('can move up: ' + canMoveUp, this.enemyType)
                             if (canMoveUp) {
                                 this.y -= this.speed;
                             }
@@ -604,6 +657,7 @@
                             var newBottomLine = this.y + this.h + this.speed;
                             var canMoveDown = isFloater ||
                                 !areaContainsWall(this.x, this.x + this.w, newBottomLine, newBottomLine, pixelAllowance)
+                            debugLog('can move down: ' + canMoveDown, this.enemyType)
                             if (canMoveDown) {
                                 this.y += this.speed
                             }
@@ -890,12 +944,7 @@
                         // pause the game (opens the shop) & go to the next level
                         // the pause is just for UX, doesn't really serve a purpose other
                         // than visually when you un-pause it it's on the next level
-                        data.gameRunning = false;
-                        setTimeout(function () {
-                            data.gameLevel++;
-                            data.gameLevelStartTime = new Date().getTime();
-                            Entities.initLevelSpecificEntities(data)
-                        }, 1)
+                        data.startNextLevel = true;
                     }
                 }
 
@@ -1000,11 +1049,38 @@
 
         // Game Script
         var Game = {
-            init: function () {
+            // starts the game using the map built in the levelBuilder
+            initCustom: function () {
+                // cant start the map without food and a player obj
+                if (foodLocations.length < 1 || !playerStartLocation) return;
+                Game.init({
+                    playCustomMap: true,
+                    gameLevel: 1,
+                    customEntities: {
+                        playerStartLocation: playerStartLocation,
+                        obstacles: obstacles,
+                        foodLocations: foodLocations,
+                        enemyLocations: enemyLocations,
+                        warpLocations: warpLocations,
+                        moneyItems: moneyItems
+                    }
+                })
+            },
+            init: function (settings) {
+                if (!settings) settings = {};
+
                 // close the rules and hide the new game button
                 document.getElementById('rules').style.display = 'none';
                 document.getElementById('newGameButton').style.display = 'none';
+                document.getElementById('startLevelText').style.display = 'none';
                 document.getElementById('gameCanvas').style.display = 'block';
+
+                // see what level the user wants to start on
+                var gameLevelInput = document.getElementById('gameLevelInput')
+                var userSelectedLevel = Number(gameLevelInput.value);
+                var gameLevel = 1;
+                // if it's higher than we have, start them on 1
+                if (entitiesForLevel[userSelectedLevel]) gameLevel = userSelectedLevel;
 
                 var cv = document.getElementById('gameCanvas');
                 var ctx = cv.getContext('2d');
@@ -1019,28 +1095,64 @@
                     canvas: canvas,
                     gameOver: false,
                     gameRunning: true,
-                    gameLevel: 1,
+                    gameLevel: gameLevel,
                     gameLevelStartTime: new Date().getTime(),
                     gameLevelResets: 0,
                     shopItems: this.buildShop(),
+                    eventListeners: {},
                 }
 
+                // see if we're running test mode or not
+                if (settings.testMode) data.testMode = true;
+
+                // see if we're running a custom map or not
+                if (settings.playCustomMap) {
+                    data.playCustomMap = settings.playCustomMap;
+                    data.customEntities = settings.customEntities;
+                    data.gameLevel = settings.gameLevel;
+                }
+
+                // init game specific things
                 Entities.init(data);
                 Input.init(data);
                 Render.init(data);
 
-                // cache the walls locations for future reference
-                data.wallsCache = this.buildWallsCache(data)
+                // init level specific things
+                Game.initLevel(data);
 
+                // start the game loop
                 Game.run(data);
+            },
+
+            initLevel(data) {
+                // if we're playing on a custom map, return to the editor after finishing the level
+                if (data.playCustomMap && data.gameLevel !== 1) {
+                    data.gameOver = true;
+                }
+
+                // build level specific entities - walls, enemies, food, etc
+                Entities.initLevelSpecificEntities(data);
+                // cache the walls' locations for future reference
+                data.wallsCache = this.buildWallsCache(data)
             },
 
             run: function (data) {
                 var loop = function () {
                     // end the loop if game is over
                     if (data.gameOver) {
-                        Game.showGameOver(data);
+                        Game.handleGameOver(data);
                         return;
+                    }
+
+                    // start the next level if needed
+                    if (data.startNextLevel) {
+                        data.startNextLevel = false;
+                        data.gameRunning = false;
+                        setTimeout(function () {
+                            data.gameLevel++;
+                            data.gameLevelStartTime = new Date().getTime();
+                            Game.initLevel(data);
+                        }, 1);
                     }
 
                     // if game is not paused, update things
@@ -1113,7 +1225,7 @@
                         cost: 10,
                         costMultiplier: 1.5,
                         costType: 'money',
-                        speed: 0.2,
+                        speed: 0.05,
                     },
                     KeyE: {
                         cost: 100,
@@ -1148,7 +1260,11 @@
                 return wallsCache;
             },
 
-            showGameOver(data) {
+            handleGameOver(data) {
+                // if we're playing a custom map, return to the editor
+                return drawEverything();
+
+                // otherwise show the final score
                 var gameOverBox = {
                     x: data.canvas.canvas.width * 0.25,
                     y: data.canvas.canvas.height * 0.25,
@@ -1202,6 +1318,7 @@
                 // Display the new game button again so user can start game over
                 document.getElementById('rules').style.display = 'block';
                 document.getElementById('newGameButton').style.display = 'block';
+                document.getElementById('startLevelText').style.display = 'block';
             },
 
             getLocalHighScoreInfo() {
@@ -1297,7 +1414,7 @@
                 Render.helpers.drawText({
                     x: data.canvas.canvas.width - 120,
                     y: 140,
-                    value: 'Speed: ' + Math.floor(data.entities.player.speed * 100)
+                    value: 'Speed: ' + Math.round(data.entities.player.speed * 100)
                 });
 
                 // Trade points for money
@@ -1326,22 +1443,22 @@
                 Render.helpers.drawText({
                     x: 20,
                     y: 210,
-                    value: 'Q: Strength Potion - 1 strength - $' + data.shopItems.KeyQ.cost
+                    value: 'Q: Strength Potion - ' + data.shopItems.KeyQ.strength + ' strength - $' + data.shopItems.KeyQ.cost
                 })
                 Render.helpers.drawText({
                     x: 20,
                     y: 235,
-                    value: 'W: Speed Potion - 20 speed - $' + data.shopItems.KeyW.cost
+                    value: 'W: Speed Potion - ' + (data.shopItems.KeyW.speed * 100) + ' speed - $' + data.shopItems.KeyW.cost
                 })
                 Render.helpers.drawText({
                     x: 20,
                     y: 260,
-                    value: 'E: Extra Life - 1 life - $' + data.shopItems.KeyE.cost
+                    value: 'E: Extra Life - ' + data.shopItems.KeyE.lives + ' life - $' + data.shopItems.KeyE.cost
                 })
                 Render.helpers.drawText({
                     x: 20,
                     y: 285,
-                    value: 'R: Increase food point values by 1 - $' + data.shopItems.KeyR.cost
+                    value: 'R: Increase food point values by ' + data.shopItems.KeyR.foodPointsIncrementer + ' - $' + data.shopItems.KeyR.cost
                 })
             }
         }
@@ -1357,218 +1474,242 @@
         //
         //
         //
-        if (window.location.href.match(/Desktop\/code/)) {
-            // start off drawing walls
-            window.wall = true;
 
-            // these are all empty to start, but you can copy into the console in the window if needed
-            var obstacles = [];
-            var foodLocations = [];
-            var foodValue = 1;
-            var enemyLocations = [];
-            var moneyItems = [];
-            var moneyStartTime = 5000;
-            var warpLocations = [];
+        // start off drawing walls
+        window.wall = true;
 
-            function drawEverything() {
-                // clear board then draw everything
-                Render.clearCanvas();
+        // these are all empty to start, but you can copy into the console in the window if needed
+        var playerStartLocation = {};
+        var obstacles = [];
+        var foodLocations = [];
+        var foodValue = 1;
+        var enemyLocations = [];
+        var moneyItems = [];
+        var moneyStartTime = 5000;
+        var warpLocations = [];
 
-                var walls = hudWalls.concat(edgeWalls);
-                walls.forEach(function (wall) {
-                    var wallObj = new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3], WALL);
-                    Render.helpers.drawEntity(wallObj);
-                })
-                obstacles.forEach(function (wall) {
-                    var wallObj = new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3], OBSTACLE)
-                    Render.helpers.drawEntity(wallObj);
-                })
-                foodLocations.forEach(function (obj) {
-                    var foodObj = new Entities.helpers.Food(obj[0], obj[1], obj[2]);
-                    Render.helpers.drawEntity(foodObj)
-                })
-                enemyLocations.forEach(function (enemy) {
-                    var enemyObj = new Entities.helpers.Enemy(enemy[0], enemy[1], enemy[2], enemy[3], enemy[4]);
-                    Render.helpers.drawEntity(enemyObj)
-                })
-                moneyItems.forEach(function (moneyObj) {
-                    var money = new Entities.helpers.MoneyFood(moneyObj);
-                    Render.helpers.drawEntity(money)
-                })
-                warpLocations.forEach(function (warpObj) {
-                    var exit = new Entities.helpers.Warp(warpObj.exit);
-                    var warp = new Entities.helpers.Warp(warpObj);
-                    warp.r = warp.size
-                    exit.r = exit.size;
-                    warp.exit = exit;
-                    Render.helpers.drawCircle(warp);
-                    Render.helpers.drawCircle(exit);
-                })
-                // draw the player obj  
-                if (window.playerObj) {
-                    Render.helpers.drawEntity(window.playerObj)
-                }
-            }
+        function drawEverything() {
+            // clear board then draw everything
+            Render.clearCanvas();
 
-            // draw the edge/hud walls right off the bat
-            drawEverything();
-
-            function copyObstacles() {
-                var obs = (JSON.stringify(obstacles))
-                console.log(obs)
-            }
-
-            function copyFood() {
-                var foodStr = (JSON.stringify(foodLocations))
-                console.log(foodStr)
-            }
-
-            function copyEnemies() {
-                var enemyLocationsStr = (JSON.stringify(enemyLocations))
-                console.log(enemyLocationsStr)
-            }
-
-            function copyMoney() {
-                console.log(JSON.stringify(moneyItems))
-            }
-
-            function copyWarps() {
-                console.log(JSON.stringify(warpLocations))
-            }
-
-            // copy in what's already there for the level to start from that point
-            function startFromSave(obj) {
-                /*
-                example object
-                    {
-                        playerStartLocation: { x: 64, y: 98 },
-                        obstacles: [],
-                        enemyLocations: [],
-                        foodLocations: [],
-                        moneyItems: [],
-                        warpLocations: [],
-                    }
-                */
-                window.playerObj = new Entities.helpers.player(obj.playerStartLocation);
-                obstacles = obj.obstacles;
-                enemyLocations = obj.enemyLocations;
-                foodLocations = obj.foodLocations;
-                moneyItems = obj.moneyItems;
-                warpLocations = obj.warpLocations;
-
-                drawEverything();
-            }
-
-            $(window).on('keypress', function (event) {
-                // if we're placing food, the numbers will switch the food value for the next one to go down
-                if (event.keyCode >= 49 && event.keyCode <= 57 && window.food) {
-                    return window.foodValue = Number(event.key)
-                }
-
-                var entityMap = {
-                    KeyE: 'enemy',
-                    KeyF: 'food',
-                    KeyW: 'warp',
-                    KeyO: 'wall',
-                    KeyM: 'money',
-                    KeyP: 'player'
-                }
-                for (var key in entityMap) {
-                    window[entityMap[key]] = false;
-                }
-                var entityType = entityMap[event.code];
-                window[entityType] = true;
-
-                return;
+            var walls = hudWalls.concat(edgeWalls);
+            walls.forEach(function (wall) {
+                var wallObj = new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3], WALL);
+                Render.helpers.drawEntity(wallObj);
             })
-
-            $('#gameCanvas').on('click', function (event) {
-                var point = [event.offsetX, event.offsetY];
-
-                if (window.player) {
-                    point[0] -= 10;
-                    point[1] -= 10
-                    if (!window.playerObj) {
-                        window.playerObj = new Entities.helpers.player();
-                    }
-                    window.playerObj.x = point[0];
-                    window.playerObj.y = point[1];
-                    console.log(point);
-                }
-
-                if (window.food) {
-                    point[0] -= 6
-                    point[1] -= 6
-                    point.push(window.foodValue);
-                    foodLocations.push(point);
-                }
-
-                if (window.enemy) {
-                    point[0] -= 10
-                    point[1] -= 10
-                    point.push(20, 2, enemyType.NORMAL);
-                    enemyLocations.push(point);
-                }
-
-                if (window.warp) {
-                    point[0] -= 1;
-                    point[1] -= 1
-                    if (!window.beginWarpPoint) {
-                        window.beginWarpPoint = point;
-                    } else {
-                        warpLocations.push({
-                            x: window.beginWarpPoint[0],
-                            y: window.beginWarpPoint[1],
-                            exit: { x: point[0], y: point[1] }
-                        })
-                        window.beginWarpPoint = null;
-                    }
-                }
-
-                if (window.money) {
-                    point[0] -= 4;
-                    point[1] -= 4;
-                    moneyItems.push({
-                        x: point[0], y: point[1], value: 20,
-                        delayFromStartToShow: moneyStartTime,
-                        delayFromStartToDie: moneyStartTime + 30000
-                    })
-                    moneyStartTime += 10000
-                }
-
-                if (window.wall) {
-                    if (!window.beginPoint) {
-                        window.beginPoint = point;
-                    } else {
-                        // make it so clicking any direction will work
-                        if (window.beginPoint[0] > point[0]) {
-                            var temp = window.beginPoint[0];
-                            window.beginPoint[0] = point[0]
-                            point[0] = temp;
-                        }
-                        if (window.beginPoint[1] > point[1]) {
-                            var temp = window.beginPoint[1];
-                            window.beginPoint[1] = point[1];
-                            point[1] = temp;
-                        }
-
-                        // make the wall 8 pixels thick
-                        var width = point[0] - window.beginPoint[0];
-                        var height = point[1] - window.beginPoint[1];
-                        if (width > height) height = 8;
-                        else width = 8;
-
-                        // draw the wall
-                        window.beginPoint.push(width, height)
-                        obstacles.push(window.beginPoint);
-                        window.beginPoint = null;
-                    }
-                }
-
-                drawEverything();
-                return;
+            obstacles.forEach(function (wall) {
+                var wallObj = new Entities.helpers.Wall(wall[0], wall[1], wall[2], wall[3], OBSTACLE)
+                Render.helpers.drawEntity(wallObj);
             })
+            foodLocations.forEach(function (obj) {
+                var foodObj = new Entities.helpers.Food(obj[0], obj[1], obj[2]);
+                Render.helpers.drawEntity(foodObj)
+            })
+            enemyLocations.forEach(function (enemy) {
+                var enemyObj = new Entities.helpers.Enemy(enemy[0], enemy[1], enemy[2], enemy[3], enemy[4]);
+                Render.helpers.drawEntity(enemyObj)
+            })
+            moneyItems.forEach(function (moneyObj) {
+                var money = new Entities.helpers.MoneyFood(moneyObj);
+                Render.helpers.drawEntity(money)
+            })
+            warpLocations.forEach(function (warpObj) {
+                var exit = new Entities.helpers.Warp(warpObj.exit);
+                var warp = new Entities.helpers.Warp(warpObj);
+                warp.r = warp.size
+                exit.r = exit.size;
+                warp.exit = exit;
+                Render.helpers.drawCircle(warp);
+                Render.helpers.drawCircle(exit);
+            })
+            // draw the player obj  
+            if (window.playerObj) {
+                Render.helpers.drawEntity(window.playerObj)
+            }
         }
+
+        // draw the edge/hud walls right off the bat
+        drawEverything();
+
+        function copyObstacles() {
+            var obs = (JSON.stringify(obstacles))
+            console.log(obs)
+        }
+
+        function copyFood() {
+            var foodStr = (JSON.stringify(foodLocations))
+            console.log(foodStr)
+        }
+
+        function copyEnemies() {
+            var enemyLocationsStr = (JSON.stringify(enemyLocations))
+            console.log(enemyLocationsStr)
+        }
+
+        function copyMoney() {
+            console.log(JSON.stringify(moneyItems))
+        }
+
+        function copyWarps() {
+            console.log(JSON.stringify(warpLocations))
+        }
+
+        // copy in what's already there for the level to start from that point
+        function startFromSave(obj) {
+            /*
+            example object
+                {
+                    playerStartLocation: { x: 64, y: 98 },
+                    obstacles: [],
+                    enemyLocations: [],
+                    foodLocations: [],
+                    moneyItems: [],
+                    warpLocations: [],
+                }
+            */
+            window.playerObj = new Entities.helpers.player(obj.playerStartLocation);
+            obstacles = obj.obstacles;
+            enemyLocations = obj.enemyLocations;
+            foodLocations = obj.foodLocations;
+            moneyItems = obj.moneyItems;
+            warpLocations = obj.warpLocations;
+
+            drawEverything();
+        }
+
+        $(window).on('keypress', function (event) {
+            // hit "T" 3 times in a row to start test map
+            if (event.code === 'KeyT') {
+                if (!window.timesTPressed) window.timesTPressed = 0;
+                window.timesTPressed++;
+                if (window.timesTPressed >= 3) {
+                    Game.init({ testMode: true })
+                }
+            } else {
+                window.timesTPressed = 0;
+            }
+
+            // hit "C" 3 times in a row to start test map
+            if (event.code === 'KeyC') {
+                if (!window.timesCPressed) window.timesCPressed = 0;
+                window.timesCPressed++;
+                if (window.timesCPressed >= 3) {
+                    Game.initCustom();
+                }
+            } else {
+                window.timesCPressed = 0;
+            }
+
+            // if we're placing food, the numbers will switch the food value for the next one to go down
+            if (event.keyCode >= 49 && event.keyCode <= 57 && window.food) {
+                return window.foodValue = Number(event.key)
+            }
+
+            var entityMap = {
+                KeyE: 'enemy',
+                KeyF: 'food',
+                KeyW: 'warp',
+                KeyO: 'wall',
+                KeyM: 'money',
+                KeyP: 'player'
+            }
+            for (var key in entityMap) {
+                window[entityMap[key]] = false;
+            }
+            var entityType = entityMap[event.code];
+            window[entityType] = true;
+
+            return;
+        })
+
+        $('#gameCanvas').on('click', function (event) {
+            var point = [event.offsetX, event.offsetY];
+
+            if (window.player) {
+                point[0] -= 10;
+                point[1] -= 10
+                if (!window.playerObj) {
+                    window.playerObj = new Entities.helpers.player();
+                }
+                window.playerObj.x = point[0];
+                window.playerObj.y = point[1];
+                playerStartLocation = { x: point[0], y: point[1] }
+                console.log(point);
+            }
+
+            if (window.food) {
+                point[0] -= 6
+                point[1] -= 6
+                point.push(window.foodValue);
+                foodLocations.push(point);
+            }
+
+            if (window.enemy) {
+                point[0] -= 10
+                point[1] -= 10
+                point.push(20, 2, enemyType.NORMAL);
+                enemyLocations.push(point);
+            }
+
+            if (window.warp) {
+                point[0] -= 1;
+                point[1] -= 1
+                if (!window.beginWarpPoint) {
+                    window.beginWarpPoint = point;
+                } else {
+                    warpLocations.push({
+                        x: window.beginWarpPoint[0],
+                        y: window.beginWarpPoint[1],
+                        exit: { x: point[0], y: point[1] }
+                    })
+                    window.beginWarpPoint = null;
+                }
+            }
+
+            if (window.money) {
+                point[0] -= 4;
+                point[1] -= 4;
+                moneyItems.push({
+                    x: point[0], y: point[1], value: 20,
+                    delayFromStartToShow: moneyStartTime,
+                    delayFromStartToDie: moneyStartTime + 30000
+                })
+                moneyStartTime += 10000
+            }
+
+            if (window.wall) {
+                if (!window.beginPoint) {
+                    window.beginPoint = point;
+                } else {
+                    // make it so clicking any direction will work
+                    if (window.beginPoint[0] > point[0]) {
+                        var temp = window.beginPoint[0];
+                        window.beginPoint[0] = point[0]
+                        point[0] = temp;
+                    }
+                    if (window.beginPoint[1] > point[1]) {
+                        var temp = window.beginPoint[1];
+                        window.beginPoint[1] = point[1];
+                        point[1] = temp;
+                    }
+
+                    // make the wall 8 pixels thick
+                    var width = point[0] - window.beginPoint[0];
+                    var height = point[1] - window.beginPoint[1];
+                    if (width > height) height = 8;
+                    else width = 8;
+
+                    // draw the wall
+                    window.beginPoint.push(width, height)
+                    obstacles.push(window.beginPoint);
+                    window.beginPoint = null;
+                }
+            }
+
+            drawEverything();
+            return;
+        })
+
     </script>
 
 </body>
