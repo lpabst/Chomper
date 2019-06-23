@@ -2,13 +2,10 @@
 TODO
 
 Levels
-build some levels
-
-Hosting
-vanilla JS host on heroku
+build 10 levels
 
 gameplay
-
+smarter enemy movement - chase something besides player maybe when stuck?
 
 DONE
 
