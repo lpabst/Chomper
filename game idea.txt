@@ -6,6 +6,7 @@ build 10 levels
 
 gameplay
 smarter enemy movement - chase something besides player maybe when stuck?
+new enemyType that follows a set path!
 
 DONE
 
