@@ -642,9 +642,9 @@
                     this.direction = 'right';
                     this.velY = 3;
                     this.velX = 3;
-                    this.speed = 2.25;
+                    this.speed = 2;
                     this.lives = 3;
-                    this.strength = 9;
+                    this.strength = 5;
                     // while in ghost state, user can pass through walls and cannot lost lives
                     this.inGhostState = false;
                     this.enteredGhostStateTimestamp = null;
@@ -655,7 +655,7 @@
                     this.foodPointsIncrementer = 0;
                     // text is displayed inside the entity's visual box
                     this.text = function () {
-                        return [this.strength, Math.floor(this.speed * 100)]
+                        return [this.strength, Math.round(this.speed * 100)]
                     }
 
                     this.update = function (data) {
@@ -756,7 +756,7 @@
                     this.frozenTimestamp = null;
                     // text is displayed inside the entity's visual box
                     this.text = function () {
-                        return [this.strength, Math.floor(this.speed * 100)]
+                        return [this.strength, Math.round(this.speed * 100)]
                     }
 
                     this.update = function (data) {
