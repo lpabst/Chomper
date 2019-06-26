@@ -615,8 +615,8 @@
                 // doing, but it's nice visually to see what's happening here
                 if (data.gameLevelResets > 0) {
                     data.entities.enemiesArray.forEach(function (enemy) {
-                        // if an enemy has 2 (200) speed normally, they'll have 250, then 300, 350, etc...
-                        enemy.speed += (enemy.speed * (data.gameLevelResets / 4));
+                        // if an enemy has 1 (100) speed normally, they'll have 133, then 166, 200, etc...
+                        enemy.speed += (enemy.speed * (data.gameLevelResets / 3));
                         // if an enemy has 100 strength normally, they'll have 150, then 200, 250, etc..
                         enemy.strength += (enemy.strength * data.gameLevelResets / 2);
                         // at speeds greater than 8 (800) they tend to jump walls since walls are 8px thick
@@ -1414,20 +1414,20 @@
                         strength: 1,
                     },
                     KeyW: {
-                        cost: 10,
+                        cost: 12,
                         costMultiplier: 1.5,
                         costType: 'money',
                         speed: 0.10,
                     },
                     KeyE: {
-                        cost: 100,
-                        costMultiplier: 1.2,
+                        cost: 120,
+                        costMultiplier: 1.6,
                         costType: 'money',
                         lives: 1
                     },
                     KeyR: {
-                        cost: 200,
-                        costMultiplier: 1.8,
+                        cost: 220,
+                        costMultiplier: 2.12,
                         costType: 'money',
                         foodPointsIncrementer: 1
                     }
