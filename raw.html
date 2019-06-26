@@ -609,8 +609,8 @@
                 // doing, but it's nice visually to see what's happening here
                 if (data.gameLevelResets > 0) {
                     data.entities.enemiesArray.forEach(function (enemy) {
-                        enemy.speed += data.gameLevelResets;
-                        enemy.strength += (data.gameLevelResets * 100);
+                        enemy.speed += (data.gameLevelResets / 2);
+                        enemy.strength += (enemy.strength * data.gameLevelResets / 2);
                         // at speeds greater than 8 (800) they tend to jump walls since walls are 8px thick
                         if (enemy.speed > 8) enemy.speed = 8;
                     })
@@ -1409,7 +1409,7 @@
                         cost: 10,
                         costMultiplier: 1.5,
                         costType: 'money',
-                        speed: 0.05,
+                        speed: 0.10,
                     },
                     KeyE: {
                         cost: 100,
@@ -1418,8 +1418,8 @@
                         lives: 1
                     },
                     KeyR: {
-                        cost: 500,
-                        costMultiplier: 2,
+                        cost: 200,
+                        costMultiplier: 1.8,
                         costType: 'money',
                         foodPointsIncrementer: 1
                     }
