@@ -201,7 +201,7 @@
                 enemyLocations: [[384, 88, 20, 1.5, "NORMAL"], [287, 425, 160, 0.5, enemyType.FLOATER]],
                 foodLocations: [[21, 160, 2], [42, 156, 2], [71, 159, 2], [101, 160, 2], [129, 160, 2], [160, 160, 2], [183, 160, 2], [17, 201, 3], [36, 199, 3], [57, 199, 3], [85, 201, 3], [106, 200, 3], [131, 200, 3], [154, 200, 3], [182, 199, 3], [15, 245, 4], [142, 244, 4], [37, 241, 1], [63, 241, 1], [91, 241, 1], [116, 241, 1], [13, 276, 2], [15, 304, 2], [13, 330, 2], [13, 355, 2], [12, 382, 2], [41, 384, 2], [67, 384, 2], [99, 384, 2], [127, 383, 2], [136, 353, 2], [136, 326, 2], [135, 296, 2], [139, 267, 2], [143, 409, 3], [112, 410, 3], [124, 423, 4], [82, 421, 2], [51, 422, 2], [19, 420, 2], [17, 447, 3], [16, 474, 3], [53, 471, 3], [86, 471, 3], [116, 470, 3], [150, 469, 3], [185, 469, 3], [183, 428, 3], [180, 373, 3], [178, 326, 3], [177, 277, 3], [179, 235, 3], [220, 294, 3], [244, 292, 3], [268, 293, 3], [292, 292, 3], [265, 319, 3], [292, 320, 3], [257, 362, 5], [314, 417, 5], [217, 385, 3], [207, 432, 3], [244, 429, 3], [251, 383, 3], [290, 357, 3], [289, 387, 3], [289, 418, 3], [355, 439, 3], [305, 450, 3], [241, 465, 3], [349, 465, 3], [397, 466, 3], [397, 421, 3], [393, 378, 3], [363, 399, 3], [360, 373, 3], [326, 379, 3], [423, 460, 5], [455, 416, 5], [431, 414, 3], [435, 380, 3], [460, 379, 3], [471, 336, 3], [435, 333, 3], [389, 330, 3], [346, 330, 3], [325, 296, 3], [323, 258, 3], [279, 253, 3], [240, 252, 3], [221, 222, 3], [261, 215, 3], [283, 190, 3], [246, 180, 3], [219, 178, 3], [218, 139, 3], [242, 153, 3], [240, 140, 3], [252, 154, 3], [252, 139, 3], [262, 152, 3], [264, 135, 3], [274, 152, 3], [276, 135, 3], [285, 109, 3], [250, 101, 3], [220, 101, 3], [218, 64, 3], [250, 61, 3], [278, 60, 3], [276, 25, 3], [219, 17, 5], [244, 20, 4], [317, 16, 3], [358, 11, 1], [389, 6, 1], [412, 12, 1], [446, 11, 1], [469, 12, 1], [321, 48, 3], [321, 81, 3], [321, 107, 3], [315, 146, 3], [319, 175, 3], [319, 208, 3], [352, 221, 3], [386, 222, 2], [426, 217, 2], [462, 219, 2], [467, 257, 2], [470, 294, 2], [358, 179, 2], [388, 179, 2], [428, 174, 2], [459, 174, 2], [392, 142, 3], [389, 112, 3], [392, 82, 3], [455, 139, 2], [453, 96, 2], [456, 54, 2], [362, 48, 5], [415, 46, 5]],
                 moneyItems: [{ "x": 135, "y": 312, "value": 20, "delayFromStartToShow": 5000, "delayFromStartToDie": 35000 }, { "x": 285, "y": 311, "value": 20, "delayFromStartToShow": 15000, "delayFromStartToDie": 45000 }, { "x": 392, "y": 226, "value": 20, "delayFromStartToShow": 25000, "delayFromStartToDie": 55000 }, { "x": 272, "y": 102, "value": 20, "delayFromStartToShow": 35000, "delayFromStartToDie": 65000 }, { "x": 26, "y": 427, "value": 20, "delayFromStartToShow": 45000, "delayFromStartToDie": 75000 }, { "x": 360, "y": 466, "value": 20, "delayFromStartToShow": 55000, "delayFromStartToDie": 85000 }, { "x": 189, "y": 128, "value": 20, "delayFromStartToShow": 65000, "delayFromStartToDie": 95000 }],
-                warpLocations: [{ "x": 14, "y": 159, "exit": { "x": 18, "y": 109 } }, { "x": 170, "y": 137, "exit": { "x": 449, "y": 470 } }, { "x": 196, "y": 109, "exit": { "x": 480, "y": 425 } }, { "x": 396, "y": 60, "exit": { "x": 163, "y": 13 } }],
+                warpLocations: [{ "x": 14, "y": 159, "exit": { "x": 18, "y": 110 } }, { "x": 170, "y": 137, "exit": { "x": 449, "y": 470 } }, { "x": 196, "y": 109, "exit": { "x": 480, "y": 425 } }, { "x": 396, "y": 60, "exit": { "x": 166, "y": 18 } }],
                 testMode: {
                     enemyLocations: [[384, 88, 20, 2, "NORMAL"]],
                     foodLocations: [[60, 130, 2]],
@@ -1617,6 +1617,16 @@
                     y: 140,
                     value: 'Speed: ' + Math.round(data.entities.player.speed * 100)
                 });
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width - 120,
+                    y: 160,
+                    value: 'Lives: ' + data.entities.player.lives
+                });
+                Render.helpers.drawText({
+                    x: data.canvas.canvas.width - 120,
+                    y: 180,
+                    value: 'Food Bonus: ' + data.entities.player.foodPointsIncrementer
+                });
 
                 // Trade points for money
                 Render.helpers.drawText({
@@ -1868,6 +1878,14 @@
         })
 
         $('#gameCanvas').on('click', function (event) {
+            console.log(entitiesForLevel[1].foodLocations.length)
+            console.log(entitiesForLevel[2].foodLocations.length)
+            console.log(entitiesForLevel[3].foodLocations.length)
+            console.log(entitiesForLevel[4].foodLocations.length)
+            console.log(entitiesForLevel[5].foodLocations.length)
+            console.log(entitiesForLevel[6].foodLocations.length)
+            console.log(entitiesForLevel[7].foodLocations.length)
+            console.log(entitiesForLevel[8].foodLocations.length)
             var point = [event.offsetX, event.offsetY];
 
             // if a game is running, do nothing
